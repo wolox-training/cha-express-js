@@ -12,8 +12,9 @@ module.exports = (sequelize, DataTypes) => {
     },
     {}
   );
-  User.associate = function(models) {
-    // associations can be defined here
+  User.associate = models => {};
+  User.createModel = user => {
+    return User.create(user);
   };
   return User;
 };

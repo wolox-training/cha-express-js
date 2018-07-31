@@ -8,6 +8,10 @@ const fs = require('fs'),
 
 const sequelize = new Sequelize(dbConfig.database, dbConfig.username, dbConfig.password, dbConfig);
 
+sequelize.authenticate().then(() => {
+  console.log('Connection has been established successfully.');
+});
+
 fs
   .readdirSync(__dirname)
   .filter(file => {
