@@ -15,7 +15,9 @@ exports.create = (req, res, next) => {
       User.createModel(userObj)
         .then(createdUser => {
           logger.log({ level: 'info', message: createdUser.firstname });
-          res.status(201).send();
+          res.status(201).json({
+            id: createdUser.id
+          });
         })
         .catch(err => {
           logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });

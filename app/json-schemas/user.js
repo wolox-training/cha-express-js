@@ -3,13 +3,16 @@ exports.forCreate = {
   required: ['firstname', 'lastname', 'email', 'password'],
   properties: {
     firstname: {
-      type: 'string'
+      type: 'string',
+      minLength: 1
     },
     lastname: {
-      type: 'string'
+      type: 'string',
+      minLength: 1
     },
     email: {
-      type: 'string'
+      type: 'string',
+      minLength: 1
     },
     password: {
       type: 'string',

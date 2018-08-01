@@ -22,6 +22,8 @@ describe('UserController', () => {
       .send(validUser)
       .then(res => {
         res.should.have.status(201);
+        res.should.be.json;
+        res.body.id.should.be.a('number');
         done();
       })
       .catch(err => {
@@ -45,6 +47,21 @@ describe('UserController', () => {
       .catch(err => {
         err.should.have.status(400);
         err.response.should.be.json;
+        err.response.body.should.have.property('name');
+        err.response.body.should.have.property('validationErrors');
+        err.response.body.validationErrors.should.have.property('body');
+        err.response.body.validationErrors.body.should.be.an('array');
+        err.response.body.validationErrors.body.should.deep.include.members([
+          {
+            keyword: 'required',
+            dataPath: '',
+            schemaPath: '#/required',
+            params: {
+              missingProperty: 'email'
+            },
+            message: "should have required property 'email'"
+          }
+        ]);
         done();
       });
   });
@@ -66,6 +83,21 @@ describe('UserController', () => {
       .catch(err => {
         err.should.have.status(400);
         err.response.should.be.json;
+        err.response.body.should.have.property('name');
+        err.response.body.should.have.property('validationErrors');
+        err.response.body.validationErrors.should.have.property('body');
+        err.response.body.validationErrors.body.should.be.an('array');
+        err.response.body.validationErrors.body.should.deep.include.members([
+          {
+            keyword: 'minLength',
+            dataPath: '.password',
+            schemaPath: '#/properties/password/minLength',
+            params: {
+              limit: 8
+            },
+            message: 'should NOT be shorter than 8 characters'
+          }
+        ]);
         done();
       });
   });
@@ -87,6 +119,48 @@ describe('UserController', () => {
       .catch(err => {
         err.should.have.status(400);
         err.response.should.be.json;
+        err.response.body.should.have.property('name');
+        err.response.body.should.have.property('validationErrors');
+        err.response.body.validationErrors.should.have.property('body');
+        err.response.body.validationErrors.body.should.be.an('array');
+        err.response.body.validationErrors.body.should.deep.include.members([
+          {
+            keyword: 'minLength',
+            dataPath: '.firstname',
+            schemaPath: '#/properties/firstname/minLength',
+            params: {
+              limit: 1
+            },
+            message: 'should NOT be shorter than 1 characters'
+          },
+          {
+            keyword: 'minLength',
+            dataPath: '.lastname',
+            schemaPath: '#/properties/lastname/minLength',
+            params: {
+              limit: 1
+            },
+            message: 'should NOT be shorter than 1 characters'
+          },
+          {
+            keyword: 'minLength',
+            dataPath: '.email',
+            schemaPath: '#/properties/email/minLength',
+            params: {
+              limit: 1
+            },
+            message: 'should NOT be shorter than 1 characters'
+          },
+          {
+            keyword: 'minLength',
+            dataPath: '.password',
+            schemaPath: '#/properties/password/minLength',
+            params: {
+              limit: 8
+            },
+            message: 'should NOT be shorter than 8 characters'
+          }
+        ]);
         done();
       });
   });
