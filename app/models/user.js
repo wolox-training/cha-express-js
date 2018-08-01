@@ -5,14 +5,56 @@ module.exports = (sequelize, DataTypes) => {
     'User',
     {
       id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-      firstname: { type: DataTypes.STRING, allowNull: false, required: true },
-      lastname: { type: DataTypes.STRING, allowNull: false, required: true },
-      email: { type: DataTypes.STRING, allowNull: false, required: true, unique: true },
-      password: { type: DataTypes.STRING, allowNull: false, required: true }
+      firstname: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        required: true,
+        validate: {
+          notEmpty: false
+        }
+      },
+      lastname: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        required: true,
+        validate: {
+          notEmpty: false
+        }
+      },
+      email: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        required: true,
+        unique: true,
+        validate: {
+          isEmail: { args: true, msg: 'not a valid email' },
+          notEmpty: false,
+          len: { args: [0, 100], msg: 'email cant be bigger than 100 characters' }
+        }
+      },
+      password: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        required: true,
+        validate: {
+          notEmpty: false
+        }
+      }
     },
     {}
   );
   User.associate = models => {};
+
+  User.isPwdLengthGreater = (user, length) => {
+    return new Promise((res, rej) => {
+      if (user.password && user.password.length < length) {
+        rej();
+      } else {
+        res();
+      }
+    });
+  };
+
   User.createModel = user => {
     return User.create(user);
   };

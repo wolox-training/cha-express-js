@@ -2,20 +2,14 @@ const assert = require('chai').assert;
 const should = require('chai').should();
 const User = require('../../app/models').User;
 
-const validUser = {
-  firstname: 'John',
-  lastname: 'Doe',
-  email: 'john.doe@wolox.com.ar',
-  password: 'johndoereloaded'
-};
-
-const userWithoutEmail = {
-  firstname: 'John',
-  lastname: 'Doe',
-  password: 'johndoereloaded'
-};
-
 describe('UserService', () => {
+  const validUser = {
+    firstname: 'John',
+    lastname: 'Doe',
+    email: 'john.doe@wolox.com.ar',
+    password: 'johndoereloaded'
+  };
+
   it('Should create a user', done => {
     User.createModel(validUser)
       .then(createdUser => {
@@ -28,13 +22,35 @@ describe('UserService', () => {
       });
   });
 
+  const userWithoutEmail = {
+    firstname: 'John',
+    lastname: 'Doe',
+    password: 'johndoereloaded'
+  };
+
   it('Should not create a user without email', done => {
     User.createModel(userWithoutEmail)
       .then(createdUser => {
         done(new Error('this should not be called'));
       })
       .catch(err => {
-        console.log(JSON.stringify(err));
+        done();
+      });
+  });
+
+  const emptyUser = {
+    firstname: '',
+    lastname: '',
+    password: '',
+    email: ''
+  };
+
+  it('Should not create an empty user', done => {
+    User.createModel(emptyUser)
+      .then(createdUser => {
+        done(new Error('this should not be called'));
+      })
+      .catch(err => {
         done();
       });
   });
