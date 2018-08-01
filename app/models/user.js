@@ -8,45 +8,27 @@ module.exports = (sequelize, DataTypes) => {
       firstname: {
         type: DataTypes.STRING,
         allowNull: false,
-        required: true,
-        validate: {
-          notEmpty: false
-        }
+        required: true
       },
       lastname: {
         type: DataTypes.STRING,
         allowNull: false,
-        required: true,
-        validate: {
-          notEmpty: false
-        }
+        required: true
       },
       email: {
         type: DataTypes.STRING,
         allowNull: false,
         required: true,
-        unique: true,
-        validate: {
-          isEmail: { args: true, msg: 'not a valid email' },
-          notEmpty: false,
-          len: { args: [0, 100], msg: 'email cant be bigger than 100 characters' }
-        }
+        unique: true
       },
       password: {
         type: DataTypes.STRING,
         allowNull: false,
-        required: true,
-        validate: {
-          notEmpty: false
-        }
+        required: true
       }
     },
     {}
   );
-
-  User.isPwdLengthGreater = (user, length) => {
-    return user.password && user.password.length >= length;
-  };
 
   User.createModel = user => {
     return User.create(user);
