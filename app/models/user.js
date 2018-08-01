@@ -43,16 +43,9 @@ module.exports = (sequelize, DataTypes) => {
     },
     {}
   );
-  User.associate = models => {};
 
   User.isPwdLengthGreater = (user, length) => {
-    return new Promise((res, rej) => {
-      if (user.password && user.password.length < length) {
-        rej();
-      } else {
-        res();
-      }
-    });
+    return user.password && user.password.length >= length;
   };
 
   User.createModel = user => {
