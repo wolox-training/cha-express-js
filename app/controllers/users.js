@@ -8,7 +8,7 @@ const User = require('../models').User;
 
 exports.create = (req, res, next) => {
   const userObj = req.body || {};
-  bcrypt
+  return bcrypt
     .hash(userObj.password, 10)
     .then(hashedPwd => {
       userObj.password = hashedPwd;
