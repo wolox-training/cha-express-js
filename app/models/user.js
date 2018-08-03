@@ -30,8 +30,5 @@ module.exports = (sequelize, DataTypes) => {
     {}
   );
 
-  User.createModel = user => {
-    return User.create(user);
-  };
   return User;
 };

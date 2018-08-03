@@ -12,7 +12,7 @@ exports.create = (req, res, next) => {
     .hash(userObj.password, 10)
     .then(hashedPwd => {
       userObj.password = hashedPwd;
-      User.createModel(userObj)
+      User.create(userObj)
         .then(createdUser => {
           logger.log({ level: 'info', message: createdUser.firstname });
           res.status(201).json({
