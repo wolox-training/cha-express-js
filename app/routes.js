@@ -6,6 +6,7 @@ const UserJsonSchema = require('./json-schemas/user');
 const validate = new Validator({ allErrors: true }).validate;
 
 exports.init = app => {
+  app.get('/users/:id', [], UsersController.get);
   app.post('/users', [validate({ body: UserJsonSchema.forCreate })], UsersController.create);
 
   // Handles body validation errors

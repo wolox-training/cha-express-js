@@ -21,4 +21,4 @@ exports.databaseError = message =>
   );
 
 exports.NOT_FOUND = 'not_found';
-exports.bookNotFound = internalError('resource not found', exports.NOT_FOUND);
+exports.notFound = resource => internalError(`${resource} not found`, exports.NOT_FOUND);

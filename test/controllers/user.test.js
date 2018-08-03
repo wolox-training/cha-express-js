@@ -24,7 +24,19 @@ describe('UserController', () => {
         res.should.have.status(201);
         res.should.be.json;
         res.body.id.should.be.a('number');
+        return request.get(`/users/${res.body.id}`);
+      })
+      .then(getRes => {
+        getRes.should.have.status(200);
+        getRes.should.be.json;
+        getRes.body.firstname.should.equal(validUser.firstname);
+        getRes.body.lastname.should.equal(validUser.lastname);
+        getRes.body.email.should.equal(validUser.email);
         done();
+      })
+      .catch(err => {
+        console.log(JSON.stringify(err, null, 2));
+        done(new Error(`User not fetch: ${err.message}`));
       })
       .catch(err => {
         done(new Error(`User not created: ${err.message}`));
@@ -39,29 +51,27 @@ describe('UserController', () => {
         res.should.have.status(201);
         res.should.be.json;
         res.body.id.should.be.a('number');
-        request
-          .post('/users')
-          .send(validUser)
-          .then(resTwo => {
-            done(new Error('Successful response - This should not be called'));
-          })
-          .catch(err => {
-            err.should.have.status(503);
-            err.response.should.be.json;
-            err.response.body.should.have.property('message');
-            err.response.body.message.should.have.property('name');
-            err.response.body.message.name.should.equal('SequelizeUniqueConstraintError');
-            err.response.body.message.should.have.property('errors');
-            err.response.body.message.errors.should.be.an('array');
-            err.response.body.message.errors.should.deep.include.members([
-              {
-                error: 'email must be unique'
-              }
-            ]);
-            err.response.body.should.have.property('internal_code');
-            err.response.body.internal_code.should.equal('database_error');
-            done();
-          });
+        return request.post('/users').send(validUser);
+      })
+      .then(resTwo => {
+        done(new Error('Successful response - This should not be called'));
+      })
+      .catch(err => {
+        err.should.have.status(503);
+        err.response.should.be.json;
+        err.response.body.should.have.property('message');
+        err.response.body.message.should.have.property('name');
+        err.response.body.message.name.should.equal('SequelizeUniqueConstraintError');
+        err.response.body.message.should.have.property('errors');
+        err.response.body.message.errors.should.be.an('array');
+        err.response.body.message.errors.should.deep.include.members([
+          {
+            error: 'email must be unique'
+          }
+        ]);
+        err.response.body.should.have.property('internal_code');
+        err.response.body.internal_code.should.equal('database_error');
+        done();
       })
       .catch(errTwo => {
         done(new Error(`User not created in first attempt: ${errTwo.message}`));
