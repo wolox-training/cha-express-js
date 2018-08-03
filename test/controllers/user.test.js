@@ -31,6 +31,43 @@ describe('UserController', () => {
       });
   });
 
+  it('Should not create a user with existing email', done => {
+    request
+      .post('/users')
+      .send(validUser)
+      .then(res => {
+        res.should.have.status(201);
+        res.should.be.json;
+        res.body.id.should.be.a('number');
+        request
+          .post('/users')
+          .send(validUser)
+          .then(resTwo => {
+            done(new Error('Successful response - This should not be called'));
+          })
+          .catch(err => {
+            err.should.have.status(503);
+            err.response.should.be.json;
+            err.response.body.should.have.property('message');
+            err.response.body.message.should.have.property('name');
+            err.response.body.message.name.should.equal('SequelizeUniqueConstraintError');
+            err.response.body.message.should.have.property('errors');
+            err.response.body.message.errors.should.be.an('array');
+            err.response.body.message.errors.should.deep.include.members([
+              {
+                error: 'email must be unique'
+              }
+            ]);
+            err.response.body.should.have.property('internal_code');
+            err.response.body.internal_code.should.equal('database_error');
+            done();
+          });
+      })
+      .catch(errTwo => {
+        done(new Error(`User not created in first attempt: ${errTwo.message}`));
+      });
+  });
+
   const userWithoutEmail = {
     firstname: 'John',
     lastname: 'Doe',
@@ -42,7 +79,7 @@ describe('UserController', () => {
       .post('/users')
       .send(userWithoutEmail)
       .then(res => {
-        done(new Error('This should not be called'));
+        done(new Error('Successful response - This should not be called'));
       })
       .catch(err => {
         err.should.have.status(400);
@@ -78,7 +115,7 @@ describe('UserController', () => {
       .post('/users')
       .send(userWithShortPassword)
       .then(res => {
-        done(new Error('This should not be called'));
+        done(new Error('Successful response - This should not be called'));
       })
       .catch(err => {
         err.should.have.status(400);
@@ -114,7 +151,7 @@ describe('UserController', () => {
       .post('/users')
       .send(emptyUser)
       .then(res => {
-        done(new Error('This should not be called'));
+        done(new Error('Successful response - This should not be called'));
       })
       .catch(err => {
         err.should.have.status(400);
