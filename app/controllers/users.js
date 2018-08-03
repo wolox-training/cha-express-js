@@ -4,7 +4,44 @@ const bcrypt = require('bcryptjs');
 const logger = require('../logger');
 const errors = require('../errors');
 
+const JwtService = require('../services/jwt');
+
 const User = require('../models').User;
+
+exports.session = (req, res, next) => {
+  const creds = req.body || {};
+
+  const userPromise = User.find({
+    where: {
+      email: creds.email
+    }
+  });
+
+  const matchPromise = userPromise.then(user => {
+    if (user) {
+      return bcrypt.compare(creds.password, user.password);
+    }
+    return new Error('invalid email');
+  });
+
+  Promise.all([userPromise, matchPromise])
+    .then(([user, match]) => {
+      if (match) {
+        return JwtService.encode({
+          id: user.id
+        });
+      }
+      return new Error('invalid password');
+    })
+    .then(token => {
+      res.status(200).json({
+        token: `Bearer ${token}`
+      });
+    })
+    .catch(err => {
+      next(errors.invalidCreds(err));
+    });
+};
 
 exports.create = (req, res, next) => {
   const userObj = req.body || {};

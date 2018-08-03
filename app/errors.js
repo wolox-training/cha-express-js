@@ -22,3 +22,6 @@ exports.databaseError = message =>
 
 exports.NOT_FOUND = 'not_found';
 exports.notFound = resource => internalError(`${resource} not found`, exports.NOT_FOUND);
+
+exports.INVALID_CREDS = 'invalid_creds';
+exports.invalidCreds = err => internalError(err.message, exports.INVALID_CREDS);
