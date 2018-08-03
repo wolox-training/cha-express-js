@@ -15,7 +15,14 @@ describe('User', () => {
     User.create(validUser)
       .then(createdUser => {
         createdUser.should.have.property('id');
-        User.findById(createdUser.id)
+        User.find({
+          where: {
+            id: createdUser.id
+          },
+          attributes: {
+            exclude: ['password']
+          }
+        })
           .then(foundUser => {
             foundUser.should.have.property('id');
             foundUser.id.should.equal(createdUser.id);
@@ -33,13 +40,13 @@ describe('User', () => {
   it('Should not create a user with existng email', done => {
     User.create(validUser)
       .then(createdUser => {
-        User.create(validUser)
-          .then(otherCreatedUser => {
-            done(new Error(`Creation succeed, should not be called`));
-          })
-          .catch(err => {
-            done();
-          });
+        return User.create(validUser);
+      })
+      .then(otherCreatedUser => {
+        done(new Error(`Creation succeed, should not be called`));
+      })
+      .catch(err => {
+        done();
       })
       .catch(err => {
         done(new Error(`DB error - User not created: ${err.message}`));
