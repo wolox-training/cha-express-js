@@ -276,7 +276,7 @@ describe('UserController', () => {
           err.response.body.message.should.equal('invalid email');
           err.response.body.should.have.property('internal_code');
           err.response.body.internal_code.should.be.a('string');
-          err.response.body.internal_code.should.equal('invalid_creds');
+          err.response.body.internal_code.should.equal('invalid_credentials');
           done();
         });
     });
@@ -311,7 +311,7 @@ describe('UserController', () => {
           err.response.body.message.should.equal('invalid password');
           err.response.body.should.have.property('internal_code');
           err.response.body.internal_code.should.be.a('string');
-          err.response.body.internal_code.should.equal('invalid_creds');
+          err.response.body.internal_code.should.equal('invalid_credentials');
           done();
         });
     });

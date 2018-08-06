@@ -42,8 +42,8 @@ const config = {
       parameterLimit: process.env.API_PARAMETER_LIMIT
     },
     session: {
-      header_name: 'authorization',
-      secret: process.env.NODE_API_SESSION_SECRET
+      auth_header: 'auth_token',
+      jwt_secret: process.env.NODE_API_JWT_SECRET
     },
     rollbar: {
       accessToken: process.env.ROLLBAR_ACCESS_TOKEN,

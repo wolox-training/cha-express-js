@@ -11,37 +11,40 @@ const User = require('../models').User;
 exports.session = (req, res, next) => {
   const creds = req.body || {};
 
-  const userPromise = User.find({
+  return User.find({
     where: {
       email: creds.email
     }
-  });
-
-  const matchPromise = userPromise.then(user => {
-    if (user !== null) {
-      return bcrypt.compare(creds.password, user.password);
-    }
-    throw new Error('invalid email');
-  });
-
-  Promise.all([userPromise, matchPromise])
-    .then(([user, match]) => {
-      if (match) {
-        return JwtService.encode({
-          id: user.id
-        });
+  })
+    .then(user => {
+      if (user) {
+        return bcrypt
+          .compare(creds.password, user.password)
+          .then(match => {
+            if (match) {
+              return JwtService.encode({
+                id: user.id
+              });
+            }
+            return Promise.reject(new Error('invalid password'));
+          })
+          .then(token => {
+            logger.log({ level: 'info', message: 'A session token was given' });
+            res.status(200).json({
+              token: `Bearer ${token}`
+            });
+          })
+          .catch(err => {
+            logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
+            next(errors.invalidCredentials(err));
+          });
+      } else {
+        return Promise.reject(new Error('invalid email'));
       }
-      throw new Error('invalid password');
-    })
-    .then(token => {
-      logger.log({ level: 'info', message: 'A session token was given' });
-      res.status(200).json({
-        token: `Bearer ${token}`
-      });
     })
     .catch(err => {
       logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
-      next(errors.invalidCreds(err));
+      next(errors.invalidCredentials(err));
     });
 };
 

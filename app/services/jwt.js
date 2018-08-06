@@ -1,8 +1,9 @@
 const jwt = require('jsonwebtoken');
+const config = require('./../../config');
 
-const SECRET = 'secret'; // should go on env variable
+const SECRET = config.common.session.jwt_secret; // 'secret'
 
-exports.HEADER_NAME = 'auth_token'; // should go on env variable
+exports.AUTH_HEADER = config.common.session.auth_header; // 'auth_token';
 
 exports.encode = toEncode => {
   return new Promise((res, rej) => {
