@@ -34,11 +34,13 @@ exports.session = (req, res, next) => {
       throw new Error('invalid password');
     })
     .then(token => {
+      logger.log({ level: 'info', message: 'A session token was given' });
       res.status(200).json({
         token: `Bearer ${token}`
       });
     })
     .catch(err => {
+      logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
       next(errors.invalidCreds(err));
     });
 };
