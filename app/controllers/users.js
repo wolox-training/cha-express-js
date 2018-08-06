@@ -18,10 +18,10 @@ exports.session = (req, res, next) => {
   });
 
   const matchPromise = userPromise.then(user => {
-    if (user) {
+    if (user !== null) {
       return bcrypt.compare(creds.password, user.password);
     }
-    return new Error('invalid email');
+    throw new Error('invalid email');
   });
 
   Promise.all([userPromise, matchPromise])
@@ -31,7 +31,7 @@ exports.session = (req, res, next) => {
           id: user.id
         });
       }
-      return new Error('invalid password');
+      throw new Error('invalid password');
     })
     .then(token => {
       res.status(200).json({

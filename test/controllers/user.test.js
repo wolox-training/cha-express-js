@@ -244,5 +244,41 @@ describe('UserController', () => {
           done(new Error(`User not be authenticated: ${err.message}`));
         });
     });
+
+    it('Should not return a token, vecause invalid email', done => {
+      const user = {
+        firstname: 'John',
+        lastname: 'Doe',
+        email: 'john.doe@wolox.com.ar',
+        password: 'johndoereloaded'
+      };
+
+      request
+        .post('/users')
+        .send(user)
+        .then(res => {
+          const userCreds = {
+            email: 'asd@wolox.com.ar',
+            password: 'johndoeland'
+          };
+
+          return request.post('/users/sessions').send(userCreds);
+        })
+        .then(res => {
+          done(new Error('Successful response - This should not be called'));
+        })
+        .catch(err => {
+          console.log(JSON.stringify(err.response.body, null, 2));
+          err.should.have.status(401);
+          err.response.should.be.json;
+          err.response.body.should.have.property('message');
+          err.response.body.message.should.be.a('string');
+          err.response.body.message.should.equal('invalid email');
+          err.response.body.should.have.property('internal_code');
+          err.response.body.internal_code.should.be.a('string');
+          err.response.body.internal_code.should.equal('invalid_creds');
+          done();
+        });
+    });
   });
 });
