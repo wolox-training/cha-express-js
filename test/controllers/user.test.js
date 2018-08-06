@@ -245,7 +245,7 @@ describe('UserController', () => {
         });
     });
 
-    it('Should not return a token, vecause invalid email', done => {
+    it('Should not return a token, because invalid email', done => {
       const user = {
         firstname: 'John',
         lastname: 'Doe',
@@ -274,6 +274,41 @@ describe('UserController', () => {
           err.response.body.should.have.property('message');
           err.response.body.message.should.be.a('string');
           err.response.body.message.should.equal('invalid email');
+          err.response.body.should.have.property('internal_code');
+          err.response.body.internal_code.should.be.a('string');
+          err.response.body.internal_code.should.equal('invalid_creds');
+          done();
+        });
+    });
+
+    it('Should not return a token, because invalid password', done => {
+      const user = {
+        firstname: 'John',
+        lastname: 'Doe',
+        email: 'john.doe@wolox.com.ar',
+        password: 'johndoereloaded'
+      };
+
+      request
+        .post('/users')
+        .send(user)
+        .then(res => {
+          const userCreds = {
+            email: 'john.doe@wolox.com.ar',
+            password: 'johndoeinvalid'
+          };
+
+          return request.post('/users/sessions').send(userCreds);
+        })
+        .then(res => {
+          done(new Error('Successful response - This should not be called'));
+        })
+        .catch(err => {
+          err.should.have.status(401);
+          err.response.should.be.json;
+          err.response.body.should.have.property('message');
+          err.response.body.message.should.be.a('string');
+          err.response.body.message.should.equal('invalid password');
           err.response.body.should.have.property('internal_code');
           err.response.body.internal_code.should.be.a('string');
           err.response.body.internal_code.should.equal('invalid_creds');
