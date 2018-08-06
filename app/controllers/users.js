@@ -30,10 +30,10 @@ exports.create = (req, res, next) => {
 };
 
 exports.get = (req, res, next) => {
-  const anId = req.params.id;
-  User.find({
+  const id = req.params.id;
+  return User.find({
     where: {
-      id: anId
+      id
     },
     attributes: {
       exclude: ['password']
