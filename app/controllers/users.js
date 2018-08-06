@@ -15,37 +15,31 @@ exports.session = (req, res, next) => {
     where: {
       email: creds.email
     }
-  })
-    .then(user => {
-      if (user) {
-        return bcrypt
-          .compare(creds.password, user.password)
-          .then(match => {
-            if (match) {
-              return JwtService.encode({
-                id: user.id
-              });
-            }
-            return Promise.reject(new Error('invalid password'));
-          })
-          .then(token => {
-            logger.log({ level: 'info', message: 'A session token was given' });
-            res.status(200).json({
-              token: `Bearer ${token}`
+  }).then(user => {
+    if (user) {
+      return bcrypt
+        .compare(creds.password, user.password)
+        .then(match => {
+          if (match) {
+            return JwtService.encode({
+              id: user.id
             });
-          })
-          .catch(err => {
-            logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
-            next(errors.invalidCredentials(err));
+          }
+          return Promise.reject(new Error('invalid password'));
+        })
+        .then(token => {
+          logger.log({ level: 'info', message: 'A session token was given' });
+          res.status(200).json({
+            token: `Bearer ${token}`
           });
-      } else {
-        return Promise.reject(new Error('invalid email'));
-      }
-    })
-    .catch(err => {
-      logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
-      next(errors.invalidCredentials(err));
-    });
+        })
+        .catch(err => {
+          logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
+          next(errors.invalidCredentials(err));
+        });
+    }
+    next(errors.invalidCredentials(new Error('invalid email')));
+  });
 };
 
 exports.create = (req, res, next) => {
