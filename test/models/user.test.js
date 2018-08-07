@@ -12,28 +12,31 @@ describe('User', () => {
   };
 
   it('Should create a user', done => {
-    User.create(validUser)
-      .then(createdUser => {
+    const createUserPromise = User.create(validUser);
+    const fetchUserPromise = createUserPromise.then(user => {
+      user.should.have.property('id');
+      return User.find({
+        where: {
+          id: user.id
+        },
+        attributes: {
+          exclude: ['password']
+        }
+      });
+    });
+
+    Promise.all([createUserPromise, fetchUserPromise])
+      .then(([createdUser, fetchedUser]) => {
         createdUser.should.have.property('id');
-        User.find({
-          where: {
-            id: createdUser.id
-          },
-          attributes: {
-            exclude: ['password']
-          }
-        })
-          .then(foundUser => {
-            foundUser.should.have.property('id');
-            foundUser.id.should.equal(createdUser.id);
-            done();
-          })
-          .catch(err => {
-            done(new Error(`DB error - User coul not be found: ${err.message}`));
-          });
+        fetchedUser.should.have.property('id');
+        fetchedUser.id.should.equal(createdUser.id);
+        fetchedUser.firstname.should.equal(validUser.firstname);
+        fetchedUser.lastname.should.equal(validUser.lastname);
+        fetchedUser.email.should.equal(validUser.email);
+        done();
       })
       .catch(err => {
-        done(new Error(`DB error - User not created: ${err.message}`));
+        done(new Error(`Error: ${err.message}`));
       });
   });
 
