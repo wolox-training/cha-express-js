@@ -87,3 +87,15 @@ exports.get = (req, res, next) => {
       next(errors.databaseError(err));
     });
 };
+
+exports.list = (req, res, next) => {
+  const query = req.body || {
+    page_number: null,
+    page_size: 100
+  };
+  res.status(200).json({
+    page_number: 1,
+    users: [{}],
+    pages_left: 0
+  });
+};

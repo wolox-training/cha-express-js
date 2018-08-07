@@ -1,7 +1,9 @@
 const chai = require('chai');
 const chaiHttp = require('chai-http');
+const chaiThings = require('chai-things');
 
 const should = chai.should();
+chai.use(chaiThings);
 
 chai.use(chaiHttp);
 const server = require('../../app');
@@ -268,7 +270,6 @@ describe('UserController', () => {
           done(new Error('Successful response - This should not be called'));
         })
         .catch(err => {
-          console.log(JSON.stringify(err.response.body, null, 2));
           err.should.have.status(401);
           err.response.should.be.json;
           err.response.body.should.have.property('message');
@@ -313,6 +314,27 @@ describe('UserController', () => {
           err.response.body.internal_code.should.be.a('string');
           err.response.body.internal_code.should.equal('invalid_credentials');
           done();
+        });
+    });
+  });
+
+  describe('GET /users', () => {
+    it('Should retrieve the users list', done => {
+      request
+        .get('/users')
+        .then(res => {
+          res.should.have.status(200);
+          res.should.be.json;
+          res.body.should.have.property('page_number');
+          res.body.page_number.should.be.a('number');
+          res.body.should.have.property('users');
+          res.body.users.should.all.be.an('array');
+          res.body.should.have.property('pages_left');
+          res.body.pages_left.should.be.a('number');
+          done();
+        })
+        .catch(err => {
+          done(new Error(`User page not retrieved: ${err.message}`));
         });
     });
   });
