@@ -1,5 +1,6 @@
 const chai = require('chai');
 const chaiHttp = require('chai-http');
+const dictum = require('dictum.js');
 
 const should = chai.should();
 
@@ -23,6 +24,7 @@ describe('UserController', () => {
       .then(res => {
         res.should.have.status(201);
         res.should.be.json;
+        dictum.chai(res, 'Creates user');
         res.body.id.should.be.a('number');
         return request.get(`/users/${res.body.id}`);
       })
