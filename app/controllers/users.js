@@ -4,7 +4,43 @@ const bcrypt = require('bcryptjs');
 const logger = require('../logger');
 const errors = require('../errors');
 
+const JwtService = require('../services/jwt');
+
 const User = require('../models').User;
+
+exports.session = (req, res, next) => {
+  const creds = req.body || {};
+
+  return User.find({
+    where: {
+      email: creds.email
+    }
+  }).then(user => {
+    if (user) {
+      return bcrypt
+        .compare(creds.password, user.password)
+        .then(match => {
+          if (!match) {
+            next(errors.invalidCredentials(new Error('invalid password')));
+          }
+          return JwtService.encode({
+            id: user.id
+          });
+        })
+        .then(token => {
+          logger.log({ level: 'info', message: 'A session token was given' });
+          res.status(200).json({
+            token: `Bearer ${token}`
+          });
+        })
+        .catch(err => {
+          logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
+          next(errors.invalidCredentials(err));
+        });
+    }
+    next(errors.invalidCredentials(new Error('invalid email')));
+  });
+};
 
 exports.create = (req, res, next) => {
   const userObj = req.body || {};

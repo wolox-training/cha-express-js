@@ -3,7 +3,8 @@ exports.config = {
   isTesting: true,
   common: {
     session: {
-      secret: 'some-super-secret'
+      auth_header: 'auth_token',
+      jwt_secret: 'testing_secret'
     }
   }
 };
