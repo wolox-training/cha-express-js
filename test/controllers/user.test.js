@@ -323,7 +323,6 @@ describe('UserController', () => {
       request
         .get('/users')
         .then(res => {
-          console.log(JSON.stringify(res.body, null, 2));
           res.should.have.status(200);
           res.should.be.json;
           res.body.should.have.property('page_number');
@@ -345,7 +344,6 @@ describe('UserController', () => {
       request
         .get('/users')
         .then(res => {
-          console.log(JSON.stringify(res.body, null, 2));
           res.should.have.status(200);
           res.should.be.json;
           res.body.should.have.property('page_number');
@@ -363,6 +361,74 @@ describe('UserController', () => {
         })
         .catch(err => {
           done(new Error(`User page not retrieved: ${err.message}`));
+        });
+    });
+
+    it('Should retrieve the first users page list with one user', done => {
+      const user = {
+        firstname: 'John',
+        lastname: 'Doe',
+        email: 'john.doe@wolox.com.ar',
+        password: 'johndoereloaded'
+      };
+
+      request
+        .post('/users')
+        .send(user)
+        .then(res => {
+          res.should.have.status(201);
+          res.should.be.json;
+          res.body.id.should.be.a('number');
+          user.id = res.body.id;
+          return request.get('/users');
+        })
+        .then(res => {
+          res.should.have.status(200);
+          res.should.be.json;
+          res.body.should.have.property('page_number');
+          res.body.page_number.should.be.a('number');
+          res.body.page_number.should.equal(1);
+          res.body.should.have.property('users');
+          res.body.users.should.all.be.an('array');
+          res.body.users.should.have.lengthOf(1);
+          res.body.users.should.contain.an.item.with.property('firstname', user.firstname);
+          res.body.users.should.contain.an.item.with.property('lastname', user.lastname);
+          res.body.users.should.contain.an.item.with.property('email', user.email);
+          res.body.should.have.property('pages_left');
+          res.body.pages_left.should.be.a('number');
+          res.body.should.have.property('overflow');
+          res.body.overflow.should.be.a('boolean');
+          res.body.overflow.should.equal(false);
+          done();
+        })
+        .catch(err => {
+          done(new Error(`User page not retrieved: ${err.message}`));
+        });
+    });
+
+    it('Should retrieve a users page list that does not exists', done => {
+      request
+        .get('/users')
+        .send({
+          page_number: 2,
+          page_size: 10
+        })
+        .then(res => {
+          res.should.have.status(200);
+          res.should.be.json;
+          res.body.should.have.property('page_number');
+          res.body.page_number.should.be.a('number');
+          res.body.page_number.should.equal(2);
+          res.body.should.have.property('users');
+          res.body.users.should.all.be.an('array');
+          res.body.users.should.be.empty;
+          res.body.should.have.property('pages_left');
+          res.body.pages_left.should.be.a('number');
+          res.body.pages_left.should.be.equal(0);
+          res.body.should.have.property('overflow');
+          res.body.overflow.should.be.a('boolean');
+          res.body.overflow.should.equal(true);
+          done();
         });
     });
   });
