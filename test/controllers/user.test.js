@@ -319,6 +319,74 @@ describe('UserController', () => {
   });
 
   describe('GET /users', () => {
+    it('Should return and error for invalid page number', done => {
+      request
+        .get('/users')
+        .send({
+          page_number: -1,
+          page_size: 10
+        })
+        .then(res => {
+          done(new Error('Successful response - This should not be called'));
+        })
+        .catch(err => {
+          err.should.have.status(400);
+          err.response.should.be.json;
+          err.response.body.should.have.property('name');
+          err.response.body.should.have.property('validationErrors');
+          err.response.body.validationErrors.should.have.property('body');
+          err.response.body.validationErrors.body.should.be.an('array');
+          err.response.body.validationErrors.body.should.deep.include.members([
+            {
+              keyword: 'minimum',
+              dataPath: '.page_number',
+              schemaPath: '#/properties/page_number/minimum',
+              params: {
+                comparison: '>=',
+                limit: 1,
+                exclusive: false
+              },
+              message: 'should be >= 1'
+            }
+          ]);
+          done();
+        });
+    });
+
+    it('Should return and error for invalid page size', done => {
+      request
+        .get('/users')
+        .send({
+          page_number: 1,
+          page_size: -10
+        })
+        .then(res => {
+          done(new Error('Successful response - This should not be called'));
+        })
+        .catch(err => {
+          err.should.have.status(400);
+          err.response.should.be.json;
+          err.response.body.should.have.property('name');
+          err.response.body.should.have.property('validationErrors');
+          err.response.body.validationErrors.should.have.property('body');
+          err.response.body.validationErrors.body.should.be.an('array');
+          err.response.body.validationErrors.body.should.deep.include.members([
+            {
+              keyword: 'minimum',
+              dataPath: '.page_size',
+              schemaPath: '#/properties/page_size/minimum',
+              params: {
+                comparison: '>=',
+                limit: 1,
+                exclusive: false
+              },
+              message: 'should be >= 1'
+            }
+          ]);
+          done();
+        });
+    });
+
     it('Should retrieve the first users page list', done => {
       request
         .get('/users')
@@ -428,6 +496,46 @@ describe('UserController', () => {
           res.body.should.have.property('overflow');
           res.body.overflow.should.be.a('boolean');
           res.body.overflow.should.equal(true);
+          done();
+        });
+    });
+  });
+
+  it('Should retrieve a users page list that has one page ahead', done => {
+    const tenPromisesUserCreation = [];
+    for (let index = 0; index < 10; index++) {
+      tenPromisesUserCreation.push(
+        request.post('/users').send({
+          firstname: `John${index}`,
+          lastname: `Doe${index}`,
+          email: `john.doe${index}@wolox.com.ar`,
+          password: `johndoe${index}`
+        })
+      );
+    }
+
+    Promise.all(tenPromisesUserCreation).then(() => {
+      request
+        .get('/users')
+        .send({
+          page_number: 1,
+          page_size: 5
+        })
+        .then(res => {
+          res.should.have.status(200);
+          res.should.be.json;
+          res.body.should.have.property('page_number');
+          res.body.page_number.should.be.a('number');
+          res.body.page_number.should.equal(1);
+          res.body.should.have.property('users');
+          res.body.users.should.all.be.an('array');
+          res.body.users.should.have.lengthOf(5);
+          res.body.should.have.property('pages_left');
+          res.body.pages_left.should.be.a('number');
+          res.body.pages_left.should.be.equal(1);
+          res.body.should.have.property('overflow');
+          res.body.overflow.should.be.a('boolean');
+          res.body.overflow.should.equal(false);
           done();
         });
     });
