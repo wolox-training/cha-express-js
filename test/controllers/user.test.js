@@ -319,10 +319,11 @@ describe('UserController', () => {
   });
 
   describe('GET /users', () => {
-    it('Should retrieve the users list', done => {
+    it('Should retrieve the first users page list', done => {
       request
         .get('/users')
         .then(res => {
+          console.log(JSON.stringify(res.body, null, 2));
           res.should.have.status(200);
           res.should.be.json;
           res.body.should.have.property('page_number');
@@ -331,6 +332,33 @@ describe('UserController', () => {
           res.body.users.should.all.be.an('array');
           res.body.should.have.property('pages_left');
           res.body.pages_left.should.be.a('number');
+          res.body.should.have.property('overflow');
+          res.body.overflow.should.be.a('boolean');
+          done();
+        })
+        .catch(err => {
+          done(new Error(`User page not retrieved: ${err.message}`));
+        });
+    });
+
+    it('Should retrieve the first users page list empty', done => {
+      request
+        .get('/users')
+        .then(res => {
+          console.log(JSON.stringify(res.body, null, 2));
+          res.should.have.status(200);
+          res.should.be.json;
+          res.body.should.have.property('page_number');
+          res.body.page_number.should.be.a('number');
+          res.body.page_number.should.equal(1);
+          res.body.should.have.property('users');
+          res.body.users.should.all.be.an('array');
+          res.body.users.should.be.empty;
+          res.body.should.have.property('pages_left');
+          res.body.pages_left.should.be.a('number');
+          res.body.should.have.property('overflow');
+          res.body.overflow.should.be.a('boolean');
+          res.body.overflow.should.equal(false);
           done();
         })
         .catch(err => {

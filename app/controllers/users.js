@@ -89,13 +89,42 @@ exports.get = (req, res, next) => {
 };
 
 exports.list = (req, res, next) => {
-  const query = req.body || {
-    page_number: null,
+  let query = {
+    page_number: 1,
     page_size: 100
   };
-  res.status(200).json({
-    page_number: 1,
-    users: [{}],
-    pages_left: 0
-  });
+  if (req.body !== null && Object.keys(req.body).length !== 0) {
+    query = req.body;
+  }
+
+  return User.count()
+    .then(count => {
+      const pagesQuantity = Math.ceil(count / query.page_size);
+      const pagesLeft = pagesQuantity - query.page_number;
+      const pageOffset = query.page_size * (query.page_number - 1);
+      User.findAll({
+        attributes: {
+          exclude: ['password']
+        },
+        limit: query.page_size,
+        offset: pageOffset,
+        $sort: { id: 1 }
+      })
+        .then(users => {
+          res.status(200).json({
+            page_number: query.page_number,
+            users,
+            pages_left: pagesLeft > 0 ? pagesLeft : 0,
+            overflow: pagesLeft < 0 && query.page_number > 1
+          });
+        })
+        .catch(err => {
+          logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
+          next(errors.databaseError(err));
+        });
+    })
+    .catch(err => {
+      logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
+      next(errors.databaseError(err));
+    });
 };
