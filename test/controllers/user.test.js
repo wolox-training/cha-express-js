@@ -231,17 +231,19 @@ describe('UserController', () => {
             password: 'johndoereloaded'
           };
 
-          return request.post('/users/sessions').send(userCreds);
-        })
-        .then(res => {
-          res.should.have.status(200);
-          res.should.be.json;
-          res.body.should.have.property('token');
-          res.body.token.should.be.a('string');
-          done();
-        })
-        .catch(err => {
-          done(new Error(`User not be authenticated: ${err.message}`));
+          return request
+            .post('/users/sessions')
+            .send(userCreds)
+            .then(resTwo => {
+              resTwo.should.have.status(200);
+              resTwo.should.be.json;
+              resTwo.body.should.have.property('token');
+              resTwo.body.token.should.be.a('string');
+              done();
+            })
+            .catch(err => {
+              done(new Error(`User not be authenticated: ${err.message}`));
+            });
         });
     });
 
@@ -262,22 +264,23 @@ describe('UserController', () => {
             password: 'johndoeland'
           };
 
-          return request.post('/users/sessions').send(userCreds);
-        })
-        .then(res => {
-          done(new Error('Successful response - This should not be called'));
-        })
-        .catch(err => {
-          console.log(JSON.stringify(err.response.body, null, 2));
-          err.should.have.status(401);
-          err.response.should.be.json;
-          err.response.body.should.have.property('message');
-          err.response.body.message.should.be.a('string');
-          err.response.body.message.should.equal('invalid email');
-          err.response.body.should.have.property('internal_code');
-          err.response.body.internal_code.should.be.a('string');
-          err.response.body.internal_code.should.equal('invalid_credentials');
-          done();
+          return request
+            .post('/users/sessions')
+            .send(userCreds)
+            .then(resTwo => {
+              done(new Error('Successful response - This should not be called'));
+            })
+            .catch(err => {
+              err.should.have.status(401);
+              err.response.should.be.json;
+              err.response.body.should.have.property('message');
+              err.response.body.message.should.be.a('string');
+              err.response.body.message.should.equal('invalid email');
+              err.response.body.should.have.property('internal_code');
+              err.response.body.internal_code.should.be.a('string');
+              err.response.body.internal_code.should.equal('invalid_credentials');
+              done();
+            });
         });
     });
 
@@ -298,21 +301,23 @@ describe('UserController', () => {
             password: 'johndoeinvalid'
           };
 
-          return request.post('/users/sessions').send(userCreds);
-        })
-        .then(res => {
-          done(new Error('Successful response - This should not be called'));
-        })
-        .catch(err => {
-          err.should.have.status(401);
-          err.response.should.be.json;
-          err.response.body.should.have.property('message');
-          err.response.body.message.should.be.a('string');
-          err.response.body.message.should.equal('invalid password');
-          err.response.body.should.have.property('internal_code');
-          err.response.body.internal_code.should.be.a('string');
-          err.response.body.internal_code.should.equal('invalid_credentials');
-          done();
+          return request
+            .post('/users/sessions')
+            .send(userCreds)
+            .then(resTwo => {
+              done(new Error('Successful response - This should not be called'));
+            })
+            .catch(err => {
+              err.should.have.status(401);
+              err.response.should.be.json;
+              err.response.body.should.have.property('message');
+              err.response.body.message.should.be.a('string');
+              err.response.body.message.should.equal('invalid password');
+              err.response.body.should.have.property('internal_code');
+              err.response.body.internal_code.should.be.a('string');
+              err.response.body.internal_code.should.equal('invalid_credentials');
+              done();
+            });
         });
     });
   });

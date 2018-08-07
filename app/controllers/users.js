@@ -25,7 +25,7 @@ exports.session = (req, res, next) => {
               id: user.id
             });
           }
-          return Promise.reject(new Error('invalid password'));
+          next(errors.invalidCredentials(new Error('invalid password')));
         })
         .then(token => {
           logger.log({ level: 'info', message: 'A session token was given' });
