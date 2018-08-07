@@ -20,12 +20,12 @@ exports.session = (req, res, next) => {
       return bcrypt
         .compare(creds.password, user.password)
         .then(match => {
-          if (match) {
-            return JwtService.encode({
-              id: user.id
-            });
+          if (!match) {
+            next(errors.invalidCredentials(new Error('invalid password')));
           }
-          next(errors.invalidCredentials(new Error('invalid password')));
+          return JwtService.encode({
+            id: user.id
+          });
         })
         .then(token => {
           logger.log({ level: 'info', message: 'A session token was given' });
