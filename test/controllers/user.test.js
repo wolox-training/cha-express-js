@@ -1,6 +1,7 @@
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 const chaiThings = require('chai-things');
+const dictum = require('dictum.js');
 
 const should = chai.should();
 chai.use(chaiThings);
@@ -26,6 +27,7 @@ describe('UserController', () => {
         .then(res => {
           res.should.have.status(201);
           res.should.be.json;
+          dictum.chai(res, 'Creates user');
           res.body.id.should.be.a('number');
           return request.get(`/users/${res.body.id}`);
         })
@@ -38,6 +40,7 @@ describe('UserController', () => {
           done();
         })
         .catch(err => {
+          console.log(JSON.stringify(err, null, 2));
           done(new Error(`User not fetch: ${err.message}`));
         })
         .catch(err => {
@@ -235,11 +238,11 @@ describe('UserController', () => {
 
           return request.post('/users/sessions').send(userCreds);
         })
-        .then(res => {
-          res.should.have.status(200);
-          res.should.be.json;
-          res.body.should.have.property('token');
-          res.body.token.should.be.a('string');
+        .then(resTwo => {
+          resTwo.should.have.status(200);
+          resTwo.should.be.json;
+          resTwo.body.should.have.property('token');
+          resTwo.body.token.should.be.a('string');
           done();
         })
         .catch(err => {
@@ -266,7 +269,7 @@ describe('UserController', () => {
 
           return request.post('/users/sessions').send(userCreds);
         })
-        .then(res => {
+        .then(resTwo => {
           done(new Error('Successful response - This should not be called'));
         })
         .catch(err => {
@@ -301,7 +304,7 @@ describe('UserController', () => {
 
           return request.post('/users/sessions').send(userCreds);
         })
-        .then(res => {
+        .then(resTwo => {
           done(new Error('Successful response - This should not be called'));
         })
         .catch(err => {

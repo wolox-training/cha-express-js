@@ -20,13 +20,12 @@ exports.session = (req, res, next) => {
       return bcrypt
         .compare(creds.password, user.password)
         .then(match => {
-          if (match) {
-            return JwtService.encode({
-              id: user.id,
-              role: 'user'
-            });
+          if (!match) {
+            next(errors.invalidCredentials(new Error('invalid password')));
           }
-          return Promise.reject(new Error('invalid password'));
+          return JwtService.encode({
+            id: user.id
+          });
         })
         .then(token => {
           logger.log({ level: 'info', message: 'A session token was given' });
@@ -46,7 +45,7 @@ exports.session = (req, res, next) => {
 
 exports.create = (req, res, next) => {
   const userObj = req.body || {};
-  bcrypt
+  return bcrypt
     .hash(userObj.password, 10)
     .then(hashedPwd => {
       userObj.password = hashedPwd;
@@ -68,10 +67,10 @@ exports.create = (req, res, next) => {
 };
 
 exports.get = (req, res, next) => {
-  const anId = req.params.id;
-  User.find({
+  const id = req.params.id;
+  return User.find({
     where: {
-      id: anId
+      id
     },
     attributes: {
       exclude: ['password']
