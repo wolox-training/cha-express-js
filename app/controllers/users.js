@@ -24,7 +24,8 @@ exports.session = (req, res, next) => {
             next(errors.invalidCredentials(new Error('invalid password')));
           }
           return JwtService.encode({
-            id: user.id
+            id: user.id,
+            role: 'user'
           });
         })
         .then(token => {
