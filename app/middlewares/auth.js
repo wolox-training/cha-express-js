@@ -1,15 +1,16 @@
 const JwtService = require('./../services/jwt'),
-  User = require('../models').User;
+  User = require('../models').User,
+  errors = require('../errors');
 
 exports.secureFor = roles => {
   return (req, res, next) => {
     const authHeader = req.headers[JwtService.AUTH_HEADER];
 
     if (authHeader) {
-      JwtService.decode(authHeader.replace('Bearer ', ''))
+      return JwtService.decode(authHeader.replace('Bearer ', ''))
         .then(json => {
-          if (!(roles.indexOf(json.role) > -1)) {
-            return Promise.reject(new Error('Your role is not allowed'));
+          if (!roles.includes(json.role)) {
+            next(errors.notAllowed(new Error('Your role is not allowed')));
           }
           return User.findById(json.id, {
             attributes: {
@@ -19,18 +20,14 @@ exports.secureFor = roles => {
         })
         .then(user => {
           if (user) {
-            req.client = user;
+            req.user = user;
             next();
           } else {
-            res.status(401).json({
-              message: `You are not allowed to consume this resource: You are not on the system`
-            });
+            next(errors.notAllowed(new Error('You are not on the system')));
           }
         })
         .catch(err => {
-          res.status(401).json({
-            message: `Your are not allowed to consume this resource: ${err.message}`
-          });
+          next(errors.notAllowed(err));
         });
     } else {
       res.status(401).json({

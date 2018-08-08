@@ -25,3 +25,7 @@ exports.notFound = resource => internalError(`${resource} not found`, exports.NO
 
 exports.INVALID_CREDENTIALS = 'invalid_credentials';
 exports.invalidCredentials = err => internalError(err.message, exports.INVALID_CREDENTIALS);
+
+exports.NOT_ALLOWED = 'not_allowed';
+exports.notAllowed = err =>
+  internalError(`You are not allowed to consume this resource: ${err.message}`, exports.NOT_ALLOWED);

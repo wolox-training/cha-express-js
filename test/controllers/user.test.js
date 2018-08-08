@@ -351,6 +351,21 @@ describe('UserController', () => {
         });
     };
 
+    const createSomeUsers = number => {
+      const promisesUserCreation = [];
+      for (let index = 0; index < number; index++) {
+        promisesUserCreation.push(
+          request.post('/users').send({
+            firstname: `John${index}`,
+            lastname: `Doe${index}`,
+            email: `john.doe${index}@wolox.com.ar`,
+            password: `johndoe${index}`
+          })
+        );
+      }
+      return promisesUserCreation;
+    };
+
     it('Should return an authentication error, because auth header not found', done => {
       request
         .get('/users')
@@ -516,17 +531,7 @@ describe('UserController', () => {
     });
 
     it('Should retrieve a users page list that has one page ahead', done => {
-      const tenPromisesUserCreation = [];
-      for (let index = 0; index < 10; index++) {
-        tenPromisesUserCreation.push(
-          request.post('/users').send({
-            firstname: `John${index}`,
-            lastname: `Doe${index}`,
-            email: `john.doe${index}@wolox.com.ar`,
-            password: `johndoe${index}`
-          })
-        );
-      }
+      const tenPromisesUserCreation = createSomeUsers(10);
 
       Promise.all(tenPromisesUserCreation).then(() => {
         createUserAndSignIn()

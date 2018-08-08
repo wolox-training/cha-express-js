@@ -91,20 +91,15 @@ exports.get = (req, res, next) => {
 };
 
 exports.list = (req, res, next) => {
-  let query = {
-    page_number: 1,
-    page_size: 100
-  };
-  if (req.body !== null && Object.keys(req.body).length !== 0) {
-    query = req.body;
-  }
+  const query =
+    req.body !== null && Object.keys(req.body).length !== 0 ? req.body : { page_number: 1, page_size: 100 };
 
   return User.count()
     .then(count => {
       const pagesQuantity = Math.ceil(count / query.page_size);
       const pagesLeft = pagesQuantity - query.page_number;
       const pageOffset = query.page_size * (query.page_number - 1);
-      User.findAll({
+      return User.findAll({
         attributes: {
           exclude: ['password']
         },
