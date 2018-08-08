@@ -1,8 +1,10 @@
 const chai = require('chai');
 const chaiHttp = require('chai-http');
+const chaiThings = require('chai-things');
 const dictum = require('dictum.js');
 
 const should = chai.should();
+chai.use(chaiThings);
 
 chai.use(chaiHttp);
 const server = require('../../app');
@@ -230,8 +232,8 @@ describe('UserController', () => {
         .send(user)
         .then(res => {
           const userCreds = {
-            email: 'john.doe@wolox.com.ar',
-            password: 'johndoereloaded'
+            email: user.email,
+            password: user.password
           };
 
           return request.post('/users/sessions').send(userCreds);
@@ -316,6 +318,256 @@ describe('UserController', () => {
           err.response.body.internal_code.should.equal('invalid_credentials');
           done();
         });
+    });
+  });
+
+  describe('GET /users', () => {
+    const createUserAndSignIn = () => {
+      const user = {
+        firstname: 'John',
+        lastname: 'Doe',
+        email: 'john.doe@wolox.com.ar',
+        password: 'johndoereloaded'
+      };
+
+      return request
+        .post('/users')
+        .send(user)
+        .then(res => {
+          res.should.have.status(201);
+          res.should.be.json;
+          res.body.should.have.property('id');
+          res.body.id.should.be.a('number');
+          return request.post('/users/sessions').send({
+            email: user.email,
+            password: user.password
+          });
+        })
+        .then(resToken => {
+          resToken.should.have.status(200);
+          resToken.should.be.json;
+          resToken.body.should.have.property('token');
+          resToken.body.token.should.be.a('string');
+          resToken.body.should.have.property('header');
+          resToken.body.token.should.be.a('string');
+          return resToken.body;
+        });
+    };
+
+    const createSomeUsers = number => {
+      const promisesUserCreation = [];
+      for (let index = 0; index < number; index++) {
+        promisesUserCreation.push(
+          request.post('/users').send({
+            firstname: `John${index}`,
+            lastname: `Doe${index}`,
+            email: `john.doe${index}@wolox.com.ar`,
+            password: `johndoe${index}`
+          })
+        );
+      }
+      return promisesUserCreation;
+    };
+
+    it('Should return an authentication error, because auth header not found', done => {
+      request
+        .get('/users')
+        .then(res => {
+          done(new Error('Successful response - This should not be called'));
+        })
+        .catch(err => {
+          err.should.have.status(401);
+          err.response.should.be.json;
+          err.response.body.should.have.property('message');
+          err.response.body.message.should.include('no auth header found:');
+          done();
+        });
+    });
+
+    it('Should return an authentication error, because malformed token', done => {
+      request
+        .get('/users')
+        .set('auth_token', 'Bearer sarasa')
+        .then(res => {
+          done(new Error('Successful response - This should not be called'));
+        })
+        .catch(err => {
+          err.should.have.status(401);
+          err.response.should.be.json;
+          err.response.body.should.have.property('message');
+          err.response.body.message.should.include('jwt malformed');
+          done();
+        });
+    });
+
+    it('Should return an error for invalid page number', done => {
+      createUserAndSignIn()
+        .then(json => {
+          return request
+            .get('/users')
+            .set(json.header, json.token)
+            .send({
+              page_number: -1,
+              page_size: 10
+            });
+        })
+        .then(res => {
+          done(new Error('Successful response - This should not be called'));
+        })
+        .catch(err => {
+          err.should.have.status(400);
+          err.response.should.be.json;
+          err.response.body.should.have.property('name');
+          err.response.body.should.have.property('validationErrors');
+          err.response.body.validationErrors.should.have.property('body');
+          err.response.body.validationErrors.body.should.be.an('array');
+          err.response.body.validationErrors.body.should.deep.include.members([
+            {
+              keyword: 'minimum',
+              dataPath: '.page_number',
+              schemaPath: '#/properties/page_number/minimum',
+              params: {
+                comparison: '>=',
+                limit: 1,
+                exclusive: false
+              },
+              message: 'should be >= 1'
+            }
+          ]);
+          done();
+        });
+    });
+
+    it('Should return and error for invalid page size', done => {
+      createUserAndSignIn()
+        .then(json => {
+          return request
+            .get('/users')
+            .set(json.header, json.token)
+            .send({
+              page_number: 1,
+              page_size: -10
+            });
+        })
+        .then(res => {
+          done(new Error('Successful response - This should not be called'));
+        })
+        .catch(err => {
+          err.should.have.status(400);
+          err.response.should.be.json;
+          err.response.body.should.have.property('name');
+          err.response.body.should.have.property('validationErrors');
+          err.response.body.validationErrors.should.have.property('body');
+          err.response.body.validationErrors.body.should.be.an('array');
+          err.response.body.validationErrors.body.should.deep.include.members([
+            {
+              keyword: 'minimum',
+              dataPath: '.page_size',
+              schemaPath: '#/properties/page_size/minimum',
+              params: {
+                comparison: '>=',
+                limit: 1,
+                exclusive: false
+              },
+              message: 'should be >= 1'
+            }
+          ]);
+          done();
+        });
+    });
+
+    it('Should retrieve the first users page list', done => {
+      createUserAndSignIn()
+        .then(json => {
+          return request.get('/users').set(json.header, json.token);
+        })
+        .then(res => {
+          res.should.have.status(200);
+          res.should.be.json;
+          res.body.should.have.property('page_number');
+          res.body.page_number.should.be.a('number');
+          res.body.should.have.property('users');
+          res.body.users.should.all.be.an('array');
+          res.body.users.should.have.lengthOf(1);
+          res.body.should.have.property('pages_left');
+          res.body.pages_left.should.be.a('number');
+          res.body.should.have.property('overflow');
+          res.body.overflow.should.be.a('boolean');
+          done();
+        })
+        .catch(err => {
+          done(new Error(`User page not retrieved: ${err.message}`));
+        });
+    });
+
+    it('Should retrieve a users page list that does not exists', done => {
+      createUserAndSignIn()
+        .then(json => {
+          return request
+            .get('/users')
+            .set(json.header, json.token)
+            .send({
+              page_number: 2,
+              page_size: 10
+            });
+        })
+        .then(res => {
+          res.should.have.status(200);
+          res.should.be.json;
+          res.body.should.have.property('page_number');
+          res.body.page_number.should.be.a('number');
+          res.body.page_number.should.equal(2);
+          res.body.should.have.property('users');
+          res.body.users.should.all.be.an('array');
+          res.body.users.should.be.empty;
+          res.body.should.have.property('pages_left');
+          res.body.pages_left.should.be.a('number');
+          res.body.pages_left.should.be.equal(0);
+          res.body.should.have.property('overflow');
+          res.body.overflow.should.be.a('boolean');
+          res.body.overflow.should.equal(true);
+          done();
+        })
+        .catch(err => {
+          done(new Error(`User not be authenticated: ${err.message}`));
+        });
+    });
+
+    it('Should retrieve a users page list that has one page ahead', done => {
+      const tenPromisesUserCreation = createSomeUsers(10);
+
+      Promise.all(tenPromisesUserCreation).then(() => {
+        createUserAndSignIn()
+          .then(json => {
+            return request
+              .get('/users')
+              .set(json.header, json.token)
+              .send({
+                page_number: 1,
+                page_size: 6
+              });
+          })
+          .then(res => {
+            res.should.have.status(200);
+            res.should.be.json;
+            res.body.should.have.property('page_number');
+            res.body.page_number.should.be.a('number');
+            res.body.page_number.should.equal(1);
+            res.body.should.have.property('users');
+            res.body.users.should.all.be.an('array');
+            res.body.users.should.have.lengthOf(6);
+            res.body.should.have.property('pages_left');
+            res.body.pages_left.should.be.a('number');
+            res.body.pages_left.should.be.equal(1);
+            res.body.should.have.property('overflow');
+            res.body.overflow.should.be.a('boolean');
+            res.body.overflow.should.equal(false);
+            done();
+          })
+          .catch(err => {
+            done(new Error(`User not be authenticated: ${err.message}`));
+          });
+      });
     });
   });
 });

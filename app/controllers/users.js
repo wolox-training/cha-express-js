@@ -30,6 +30,7 @@ exports.session = (req, res, next) => {
         .then(token => {
           logger.log({ level: 'info', message: 'A session token was given' });
           res.status(200).json({
+            header: JwtService.AUTH_HEADER,
             token: `Bearer ${token}`
           });
         })
@@ -81,6 +82,42 @@ exports.get = (req, res, next) => {
       } else {
         next(errors.notFound('user'));
       }
+    })
+    .catch(err => {
+      logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
+      next(errors.databaseError(err));
+    });
+};
+
+exports.list = (req, res, next) => {
+  const query =
+    req.body !== null && Object.keys(req.body).length !== 0 ? req.body : { page_number: 1, page_size: 100 };
+
+  return User.count()
+    .then(count => {
+      const pagesQuantity = Math.ceil(count / query.page_size);
+      const pagesLeft = pagesQuantity - query.page_number;
+      const pageOffset = query.page_size * (query.page_number - 1);
+      return User.findAll({
+        attributes: {
+          exclude: ['password']
+        },
+        limit: query.page_size,
+        offset: pageOffset,
+        $sort: { id: 1 }
+      })
+        .then(users => {
+          res.status(200).json({
+            page_number: query.page_number,
+            users,
+            pages_left: pagesLeft > 0 ? pagesLeft : 0,
+            overflow: pagesLeft < 0 && query.page_number > 1
+          });
+        })
+        .catch(err => {
+          logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
+          next(errors.databaseError(err));
+        });
     })
     .catch(err => {
       logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });

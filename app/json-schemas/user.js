@@ -35,3 +35,18 @@ exports.forSession = {
     }
   }
 };
+
+exports.forList = {
+  type: 'object',
+  properties: {
+    page_number: {
+      type: 'integer',
+      minimum: 1
+    },
+    page_size: {
+      type: 'integer',
+      minimum: 1,
+      maximum: 1000
+    }
+  }
+};
