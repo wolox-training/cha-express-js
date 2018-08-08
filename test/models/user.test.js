@@ -8,7 +8,8 @@ describe('User', () => {
     firstname: 'John',
     lastname: 'Doe',
     email: 'john.doe@wolox.com.ar',
-    password: 'johndoereloaded'
+    password: 'johndoereloaded',
+    role: 'regular'
   };
 
   it('Should create a user', done => {

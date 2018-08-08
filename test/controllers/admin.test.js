@@ -52,9 +52,31 @@ describe('AdminController', () => {
         });
     });
 
-    it('Should not create a user with existing email', done => {
+    it('Should create an admin over existing user', done => {
       request
         .post('/users')
+        .send(validAdmin)
+        .then(res => {
+          res.should.have.status(201);
+          res.should.be.json;
+          res.body.id.should.be.a('number');
+          return request.post('/admin/users').send(validAdmin);
+        })
+        .then(resTwo => {
+          done();
+        })
+        .catch(err => {
+          console.log(JSON.stringify(err.response.body, null, 2));
+          done(new Error(`Admin not created: ${err.message}`));
+        })
+        .catch(errTwo => {
+          done(new Error(`User not created in first attempt: ${errTwo.message}`));
+        });
+    });
+
+    it('Should not create a user with existing email', done => {
+      request
+        .post('/admin/users')
         .send(validAdmin)
         .then(res => {
           res.should.have.status(201);

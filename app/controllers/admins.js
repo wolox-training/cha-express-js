@@ -13,7 +13,7 @@ exports.create = (req, res, next) => {
     .then(hashedPwd => {
       adminObj.password = hashedPwd;
       adminObj.role = 'admin';
-      return User.create(adminObj);
+      return User.createAdmin(adminObj);
     })
     .then(createdUser => {
       logger.log({ level: 'info', message: createdUser.firstname });

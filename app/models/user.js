@@ -28,11 +28,26 @@ module.exports = (sequelize, DataTypes) => {
       },
       role: {
         type: DataTypes.STRING,
+        allowNull: false,
         default: 'regular'
       }
     },
     {}
   );
+
+  User.createAdmin = admin => {
+    return User.find({
+      where: {
+        email: admin.email
+      }
+    }).then(foundUser => {
+      if (foundUser && foundUser.role === 'regular') {
+        return foundUser.update({ role: admin.role });
+      } else {
+        return User.create(admin);
+      }
+    });
+  };
 
   return User;
 };

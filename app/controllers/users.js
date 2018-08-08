@@ -50,6 +50,7 @@ exports.create = (req, res, next) => {
     .hash(userObj.password, 10)
     .then(hashedPwd => {
       userObj.password = hashedPwd;
+      userObj.role = 'regular';
       return User.create(userObj);
     })
     .then(createdUser => {
