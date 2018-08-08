@@ -34,7 +34,7 @@ exports.secureFor = roles => {
         });
     } else {
       res.status(401).json({
-        message: `no header ${JwtService.AUTH_HEADER} found`
+        message: `no auth header found: ${JwtService.AUTH_HEADER}`
       });
     }
   };

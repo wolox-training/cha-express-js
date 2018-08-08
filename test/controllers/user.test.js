@@ -351,7 +351,38 @@ describe('UserController', () => {
         });
     };
 
-    it('Should return and error for invalid page number', done => {
+    it('Should return an authentication error, because auth header not found', done => {
+      request
+        .get('/users')
+        .then(res => {
+          done(new Error('Successful response - This should not be called'));
+        })
+        .catch(err => {
+          err.should.have.status(401);
+          err.response.should.be.json;
+          err.response.body.should.have.property('message');
+          err.response.body.message.should.include('no auth header found:');
+          done();
+        });
+    });
+
+    it('Should return an authentication error, because malformed token', done => {
+      request
+        .get('/users')
+        .set('auth_token', 'Bearer sarasa')
+        .then(res => {
+          done(new Error('Successful response - This should not be called'));
+        })
+        .catch(err => {
+          err.should.have.status(401);
+          err.response.should.be.json;
+          err.response.body.should.have.property('message');
+          err.response.body.message.should.include('jwt malformed');
+          done();
+        });
+    });
+
+    it('Should return an error for invalid page number', done => {
       createUserAndSignIn()
         .then(json => {
           return request
@@ -366,7 +397,6 @@ describe('UserController', () => {
           done(new Error('Successful response - This should not be called'));
         })
         .catch(err => {
-          console.log(JSON.stringify(err.response.body, null, 2));
           err.should.have.status(400);
           err.response.should.be.json;
           err.response.body.should.have.property('name');
