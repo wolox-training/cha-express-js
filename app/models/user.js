@@ -25,6 +25,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
         required: true
+      },
+      role: {
+        type: DataTypes.STRING,
+        default: 'regular'
       }
     },
     {}
