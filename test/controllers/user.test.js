@@ -40,7 +40,6 @@ describe('UserController', () => {
           done();
         })
         .catch(err => {
-          console.log(JSON.stringify(err, null, 2));
           done(new Error(`User not fetch: ${err.message}`));
         })
         .catch(err => {

@@ -45,11 +45,179 @@ describe('AdminController', () => {
           done();
         })
         .catch(err => {
-          console.log(JSON.stringify(err, null, 2));
           done(new Error(`Admin not fetch: ${err.message}`));
         })
         .catch(err => {
           done(new Error(`Admin not created: ${err.message}`));
+        });
+    });
+
+    it('Should not create a user with existing email', done => {
+      request
+        .post('/users')
+        .send(validAdmin)
+        .then(res => {
+          res.should.have.status(201);
+          res.should.be.json;
+          res.body.id.should.be.a('number');
+          return request.post('/admin/users').send(validAdmin);
+        })
+        .then(resTwo => {
+          done(new Error('Successful response - This should not be called'));
+        })
+        .catch(err => {
+          err.should.have.status(503);
+          err.response.should.be.json;
+          err.response.body.should.have.property('message');
+          err.response.body.message.should.have.property('name');
+          err.response.body.message.name.should.equal('SequelizeUniqueConstraintError');
+          err.response.body.message.should.have.property('errors');
+          err.response.body.message.errors.should.be.an('array');
+          err.response.body.message.errors.should.deep.include.members([
+            {
+              error: 'email must be unique'
+            }
+          ]);
+          err.response.body.should.have.property('internal_code');
+          err.response.body.internal_code.should.equal('database_error');
+          done();
+        })
+        .catch(errTwo => {
+          done(new Error(`User not created in first attempt: ${errTwo.message}`));
+        });
+    });
+
+    const adminWithoutEmail = {
+      firstname: 'John',
+      lastname: 'Doe',
+      password: 'johndoereloaded'
+    };
+
+    it('Should not create a user without email', done => {
+      request
+        .post('/admin/users')
+        .send(adminWithoutEmail)
+        .then(res => {
+          done(new Error('Successful response - This should not be called'));
+        })
+        .catch(err => {
+          err.should.have.status(400);
+          err.response.should.be.json;
+          err.response.body.should.have.property('name');
+          err.response.body.should.have.property('validationErrors');
+          err.response.body.validationErrors.should.have.property('body');
+          err.response.body.validationErrors.body.should.be.an('array');
+          err.response.body.validationErrors.body.should.deep.include.members([
+            {
+              keyword: 'required',
+              dataPath: '',
+              schemaPath: '#/required',
+              params: {
+                missingProperty: 'email'
+              },
+              message: "should have required property 'email'"
+            }
+          ]);
+          done();
+        });
+    });
+
+    const adminWithShortPassword = {
+      firstname: 'John',
+      lastname: 'Doe',
+      email: 'john.doe@wolox.com.ar',
+      password: 'asd'
+    };
+
+    it('Should not create an user with a short password', done => {
+      request
+        .post('/admin/users')
+        .send(adminWithShortPassword)
+        .then(res => {
+          done(new Error('Successful response - This should not be called'));
+        })
+        .catch(err => {
+          err.should.have.status(400);
+          err.response.should.be.json;
+          err.response.body.should.have.property('name');
+          err.response.body.should.have.property('validationErrors');
+          err.response.body.validationErrors.should.have.property('body');
+          err.response.body.validationErrors.body.should.be.an('array');
+          err.response.body.validationErrors.body.should.deep.include.members([
+            {
+              keyword: 'minLength',
+              dataPath: '.password',
+              schemaPath: '#/properties/password/minLength',
+              params: {
+                limit: 8
+              },
+              message: 'should NOT be shorter than 8 characters'
+            }
+          ]);
+          done();
+        });
+    });
+
+    const emptyAdmin = {
+      firstname: '',
+      lastname: '',
+      password: '',
+      email: ''
+    };
+
+    it('Should not create an empty user', done => {
+      request
+        .post('/admin/users')
+        .send(emptyAdmin)
+        .then(res => {
+          done(new Error('Successful response - This should not be called'));
+        })
+        .catch(err => {
+          err.should.have.status(400);
+          err.response.should.be.json;
+          err.response.body.should.have.property('name');
+          err.response.body.should.have.property('validationErrors');
+          err.response.body.validationErrors.should.have.property('body');
+          err.response.body.validationErrors.body.should.be.an('array');
+          err.response.body.validationErrors.body.should.deep.include.members([
+            {
+              keyword: 'minLength',
+              dataPath: '.firstname',
+              schemaPath: '#/properties/firstname/minLength',
+              params: {
+                limit: 1
+              },
+              message: 'should NOT be shorter than 1 characters'
+            },
+            {
+              keyword: 'minLength',
+              dataPath: '.lastname',
+              schemaPath: '#/properties/lastname/minLength',
+              params: {
+                limit: 1
+              },
+              message: 'should NOT be shorter than 1 characters'
+            },
+            {
+              keyword: 'minLength',
+              dataPath: '.email',
+              schemaPath: '#/properties/email/minLength',
+              params: {
+                limit: 1
+              },
+              message: 'should NOT be shorter than 1 characters'
+            },
+            {
+              keyword: 'minLength',
+              dataPath: '.password',
+              schemaPath: '#/properties/password/minLength',
+              params: {
+                limit: 8
+              },
+              message: 'should NOT be shorter than 8 characters'
+            }
+          ]);
+          done();
         });
     });
   });
