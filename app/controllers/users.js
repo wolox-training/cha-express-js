@@ -22,7 +22,8 @@ exports.session = (req, res, next) => {
         .then(match => {
           if (match) {
             return JwtService.encode({
-              id: user.id
+              id: user.id,
+              role: 'user'
             });
           }
           return Promise.reject(new Error('invalid password'));
@@ -30,6 +31,7 @@ exports.session = (req, res, next) => {
         .then(token => {
           logger.log({ level: 'info', message: 'A session token was given' });
           res.status(200).json({
+            header: JwtService.AUTH_HEADER,
             token: `Bearer ${token}`
           });
         })

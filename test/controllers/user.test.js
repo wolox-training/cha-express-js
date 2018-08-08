@@ -229,8 +229,8 @@ describe('UserController', () => {
         .send(user)
         .then(res => {
           const userCreds = {
-            email: 'john.doe@wolox.com.ar',
-            password: 'johndoereloaded'
+            email: user.email,
+            password: user.password
           };
 
           return request.post('/users/sessions').send(userCreds);
@@ -319,17 +319,54 @@ describe('UserController', () => {
   });
 
   describe('GET /users', () => {
+    const createUserAndSignIn = () => {
+      const user = {
+        firstname: 'John',
+        lastname: 'Doe',
+        email: 'john.doe@wolox.com.ar',
+        password: 'johndoereloaded'
+      };
+
+      return request
+        .post('/users')
+        .send(user)
+        .then(res => {
+          res.should.have.status(201);
+          res.should.be.json;
+          res.body.should.have.property('id');
+          res.body.id.should.be.a('number');
+          return request.post('/users/sessions').send({
+            email: user.email,
+            password: user.password
+          });
+        })
+        .then(resToken => {
+          resToken.should.have.status(200);
+          resToken.should.be.json;
+          resToken.body.should.have.property('token');
+          resToken.body.token.should.be.a('string');
+          resToken.body.should.have.property('header');
+          resToken.body.token.should.be.a('string');
+          return resToken.body;
+        });
+    };
+
     it('Should return and error for invalid page number', done => {
-      request
-        .get('/users')
-        .send({
-          page_number: -1,
-          page_size: 10
+      createUserAndSignIn()
+        .then(json => {
+          return request
+            .get('/users')
+            .set(json.header, json.token)
+            .send({
+              page_number: -1,
+              page_size: 10
+            });
         })
         .then(res => {
           done(new Error('Successful response - This should not be called'));
         })
         .catch(err => {
+          console.log(JSON.stringify(err.response.body, null, 2));
           err.should.have.status(400);
           err.response.should.be.json;
           err.response.body.should.have.property('name');
@@ -354,11 +391,15 @@ describe('UserController', () => {
     });
 
     it('Should return and error for invalid page size', done => {
-      request
-        .get('/users')
-        .send({
-          page_number: 1,
-          page_size: -10
+      createUserAndSignIn()
+        .then(json => {
+          return request
+            .get('/users')
+            .set(json.header, json.token)
+            .send({
+              page_number: 1,
+              page_size: -10
+            });
         })
         .then(res => {
           done(new Error('Successful response - This should not be called'));
@@ -388,85 +429,22 @@ describe('UserController', () => {
     });
 
     it('Should retrieve the first users page list', done => {
-      request
-        .get('/users')
-        .then(res => {
-          res.should.have.status(200);
-          res.should.be.json;
-          res.body.should.have.property('page_number');
-          res.body.page_number.should.be.a('number');
-          res.body.should.have.property('users');
-          res.body.users.should.all.be.an('array');
-          res.body.should.have.property('pages_left');
-          res.body.pages_left.should.be.a('number');
-          res.body.should.have.property('overflow');
-          res.body.overflow.should.be.a('boolean');
-          done();
-        })
-        .catch(err => {
-          done(new Error(`User page not retrieved: ${err.message}`));
-        });
-    });
-
-    it('Should retrieve the first users page list empty', done => {
-      request
-        .get('/users')
-        .then(res => {
-          res.should.have.status(200);
-          res.should.be.json;
-          res.body.should.have.property('page_number');
-          res.body.page_number.should.be.a('number');
-          res.body.page_number.should.equal(1);
-          res.body.should.have.property('users');
-          res.body.users.should.all.be.an('array');
-          res.body.users.should.be.empty;
-          res.body.should.have.property('pages_left');
-          res.body.pages_left.should.be.a('number');
-          res.body.should.have.property('overflow');
-          res.body.overflow.should.be.a('boolean');
-          res.body.overflow.should.equal(false);
-          done();
-        })
-        .catch(err => {
-          done(new Error(`User page not retrieved: ${err.message}`));
-        });
-    });
-
-    it('Should retrieve the first users page list with one user', done => {
-      const user = {
-        firstname: 'John',
-        lastname: 'Doe',
-        email: 'john.doe@wolox.com.ar',
-        password: 'johndoereloaded'
-      };
-
-      request
-        .post('/users')
-        .send(user)
-        .then(res => {
-          res.should.have.status(201);
-          res.should.be.json;
-          res.body.id.should.be.a('number');
-          user.id = res.body.id;
-          return request.get('/users');
+      createUserAndSignIn()
+        .then(json => {
+          return request.get('/users').set(json.header, json.token);
         })
         .then(res => {
           res.should.have.status(200);
           res.should.be.json;
           res.body.should.have.property('page_number');
           res.body.page_number.should.be.a('number');
-          res.body.page_number.should.equal(1);
           res.body.should.have.property('users');
           res.body.users.should.all.be.an('array');
           res.body.users.should.have.lengthOf(1);
-          res.body.users.should.contain.an.item.with.property('firstname', user.firstname);
-          res.body.users.should.contain.an.item.with.property('lastname', user.lastname);
-          res.body.users.should.contain.an.item.with.property('email', user.email);
           res.body.should.have.property('pages_left');
           res.body.pages_left.should.be.a('number');
           res.body.should.have.property('overflow');
           res.body.overflow.should.be.a('boolean');
-          res.body.overflow.should.equal(false);
           done();
         })
         .catch(err => {
@@ -475,11 +453,15 @@ describe('UserController', () => {
     });
 
     it('Should retrieve a users page list that does not exists', done => {
-      request
-        .get('/users')
-        .send({
-          page_number: 2,
-          page_size: 10
+      createUserAndSignIn()
+        .then(json => {
+          return request
+            .get('/users')
+            .set(json.header, json.token)
+            .send({
+              page_number: 2,
+              page_size: 10
+            });
         })
         .then(res => {
           res.should.have.status(200);
@@ -497,47 +479,57 @@ describe('UserController', () => {
           res.body.overflow.should.be.a('boolean');
           res.body.overflow.should.equal(true);
           done();
+        })
+        .catch(err => {
+          done(new Error(`User not be authenticated: ${err.message}`));
         });
     });
-  });
 
-  it('Should retrieve a users page list that has one page ahead', done => {
-    const tenPromisesUserCreation = [];
-    for (let index = 0; index < 10; index++) {
-      tenPromisesUserCreation.push(
-        request.post('/users').send({
-          firstname: `John${index}`,
-          lastname: `Doe${index}`,
-          email: `john.doe${index}@wolox.com.ar`,
-          password: `johndoe${index}`
-        })
-      );
-    }
+    it('Should retrieve a users page list that has one page ahead', done => {
+      const tenPromisesUserCreation = [];
+      for (let index = 0; index < 10; index++) {
+        tenPromisesUserCreation.push(
+          request.post('/users').send({
+            firstname: `John${index}`,
+            lastname: `Doe${index}`,
+            email: `john.doe${index}@wolox.com.ar`,
+            password: `johndoe${index}`
+          })
+        );
+      }
 
-    Promise.all(tenPromisesUserCreation).then(() => {
-      request
-        .get('/users')
-        .send({
-          page_number: 1,
-          page_size: 5
-        })
-        .then(res => {
-          res.should.have.status(200);
-          res.should.be.json;
-          res.body.should.have.property('page_number');
-          res.body.page_number.should.be.a('number');
-          res.body.page_number.should.equal(1);
-          res.body.should.have.property('users');
-          res.body.users.should.all.be.an('array');
-          res.body.users.should.have.lengthOf(5);
-          res.body.should.have.property('pages_left');
-          res.body.pages_left.should.be.a('number');
-          res.body.pages_left.should.be.equal(1);
-          res.body.should.have.property('overflow');
-          res.body.overflow.should.be.a('boolean');
-          res.body.overflow.should.equal(false);
-          done();
-        });
+      Promise.all(tenPromisesUserCreation).then(() => {
+        createUserAndSignIn()
+          .then(json => {
+            return request
+              .get('/users')
+              .set(json.header, json.token)
+              .send({
+                page_number: 1,
+                page_size: 6
+              });
+          })
+          .then(res => {
+            res.should.have.status(200);
+            res.should.be.json;
+            res.body.should.have.property('page_number');
+            res.body.page_number.should.be.a('number');
+            res.body.page_number.should.equal(1);
+            res.body.should.have.property('users');
+            res.body.users.should.all.be.an('array');
+            res.body.users.should.have.lengthOf(6);
+            res.body.should.have.property('pages_left');
+            res.body.pages_left.should.be.a('number');
+            res.body.pages_left.should.be.equal(1);
+            res.body.should.have.property('overflow');
+            res.body.overflow.should.be.a('boolean');
+            res.body.overflow.should.equal(false);
+            done();
+          })
+          .catch(err => {
+            done(new Error(`User not be authenticated: ${err.message}`));
+          });
+      });
     });
   });
 });
