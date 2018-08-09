@@ -35,7 +35,13 @@ module.exports = (sequelize, DataTypes) => {
     {}
   );
 
+  User.createUser = user => {
+    user.role = 'regular';
+    return User.create(user);
+  };
+
   User.createAdmin = admin => {
+    admin.role = 'admin';
     return User.find({
       where: {
         email: admin.email
