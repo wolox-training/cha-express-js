@@ -25,7 +25,7 @@ exports.session = (req, res, next) => {
           }
           return JwtService.encode({
             id: user.id,
-            role: 'user'
+            role: user.role
           });
         })
         .then(token => {

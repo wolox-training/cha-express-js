@@ -11,6 +11,42 @@ const server = require('../../app');
 
 const request = chai.request(server);
 
+const signInAsDefaultAdmin = () => {
+  return request
+    .post('/users/sessions')
+    .send({
+      email: 'admin@wolox.com.ar',
+      password: 'default1234'
+    })
+    .then(resToken => {
+      resToken.should.have.status(200);
+      resToken.should.be.json;
+      resToken.body.should.have.property('token');
+      resToken.body.token.should.be.a('string');
+      resToken.body.should.have.property('header');
+      resToken.body.token.should.be.a('string');
+      return resToken.body;
+    });
+};
+
+const signInAsDefaultUser = () => {
+  return request
+    .post('/users/sessions')
+    .send({
+      email: 'user@wolox.com.ar',
+      password: 'default1234'
+    })
+    .then(resToken => {
+      resToken.should.have.status(200);
+      resToken.should.be.json;
+      resToken.body.should.have.property('token');
+      resToken.body.token.should.be.a('string');
+      resToken.body.should.have.property('header');
+      resToken.body.token.should.be.a('string');
+      return resToken.body;
+    });
+};
+
 describe('AdminController', () => {
   describe('POST /admin/users', () => {
     const validAdmin = {
@@ -20,10 +56,50 @@ describe('AdminController', () => {
       password: 'johndoereloaded'
     };
 
-    it('Should create an admin', done => {
+    it('Should not create an admin, if not logged', done => {
       request
         .post('/admin/users')
         .send(validAdmin)
+        .then(res => {
+          done(new Error('Successful response - This should not be called'));
+        })
+        .catch(err => {
+          err.should.have.status(401);
+          err.response.should.be.json;
+          err.response.body.should.have.property('message');
+          err.response.body.message.should.include('no auth header found');
+          done();
+        });
+    });
+
+    it('Should not create an admin, if logged in as regular user', done => {
+      signInAsDefaultUser()
+        .then(json => {
+          return request
+            .post('/admin/users')
+            .set(json.header, json.token)
+            .send(validAdmin);
+        })
+        .then(res => {
+          done(new Error('Successful response - This should not be called'));
+        })
+        .catch(err => {
+          err.should.have.status(401);
+          err.response.should.be.json;
+          err.response.body.should.have.property('message');
+          err.response.body.message.should.include('Your role is not allowed');
+          done();
+        });
+    });
+
+    it('Should create an admin', done => {
+      signInAsDefaultAdmin()
+        .then(json => {
+          return request
+            .post('/admin/users')
+            .set(json.header, json.token)
+            .send(validAdmin);
+        })
         .then(res => {
           res.should.have.status(201);
           res.should.be.json;
@@ -60,9 +136,18 @@ describe('AdminController', () => {
           res.should.have.status(201);
           res.should.be.json;
           res.body.id.should.be.a('number');
-          return request.post('/admin/users').send(validAdmin);
+          return signInAsDefaultAdmin();
+        })
+        .then(json => {
+          return request
+            .post('/admin/users')
+            .set(json.header, json.token)
+            .send(validAdmin);
         })
         .then(resTwo => {
+          resTwo.should.have.status(201);
+          resTwo.should.be.json;
+          resTwo.body.id.should.be.a('number');
           done();
         })
         .catch(err => {
@@ -75,14 +160,24 @@ describe('AdminController', () => {
     });
 
     it('Should not create a user with existing email', done => {
-      request
-        .post('/admin/users')
-        .send(validAdmin)
+      signInAsDefaultAdmin()
+        .then(json => {
+          return request
+            .post('/admin/users')
+            .set(json.header, json.token)
+            .send(validAdmin);
+        })
         .then(res => {
           res.should.have.status(201);
           res.should.be.json;
           res.body.id.should.be.a('number');
-          return request.post('/admin/users').send(validAdmin);
+          return signInAsDefaultAdmin();
+        })
+        .then(json => {
+          return request
+            .post('/admin/users')
+            .set(json.header, json.token)
+            .send(validAdmin);
         })
         .then(resTwo => {
           done(new Error('Successful response - This should not be called'));
@@ -116,9 +211,13 @@ describe('AdminController', () => {
     };
 
     it('Should not create a user without email', done => {
-      request
-        .post('/admin/users')
-        .send(adminWithoutEmail)
+      signInAsDefaultAdmin()
+        .then(json => {
+          return request
+            .post('/admin/users')
+            .set(json.header, json.token)
+            .send(adminWithoutEmail);
+        })
         .then(res => {
           done(new Error('Successful response - This should not be called'));
         })
@@ -152,9 +251,13 @@ describe('AdminController', () => {
     };
 
     it('Should not create an user with a short password', done => {
-      request
-        .post('/admin/users')
-        .send(adminWithShortPassword)
+      signInAsDefaultAdmin()
+        .then(json => {
+          return request
+            .post('/admin/users')
+            .set(json.header, json.token)
+            .send(adminWithShortPassword);
+        })
         .then(res => {
           done(new Error('Successful response - This should not be called'));
         })
@@ -188,9 +291,13 @@ describe('AdminController', () => {
     };
 
     it('Should not create an empty user', done => {
-      request
-        .post('/admin/users')
-        .send(emptyAdmin)
+      signInAsDefaultAdmin()
+        .then(json => {
+          return request
+            .post('/admin/users')
+            .set(json.header, json.token)
+            .send(emptyAdmin);
+        })
         .then(res => {
           done(new Error('Successful response - This should not be called'));
         })
