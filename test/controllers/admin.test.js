@@ -2,50 +2,14 @@ const chai = require('chai');
 const chaiHttp = require('chai-http');
 const chaiThings = require('chai-things');
 const dictum = require('dictum.js');
+const server = require('../../app');
+const UserRequests = require('../helpers/user_requests');
+
+chai.use(chaiThings);
+chai.use(chaiHttp);
 
 const should = chai.should();
-chai.use(chaiThings);
-
-chai.use(chaiHttp);
-const server = require('../../app');
-
 const request = chai.request(server);
-
-const signInAsDefaultAdmin = () => {
-  return request
-    .post('/users/sessions')
-    .send({
-      email: 'admin@wolox.com.ar',
-      password: 'default1234'
-    })
-    .then(resToken => {
-      resToken.should.have.status(200);
-      resToken.should.be.json;
-      resToken.body.should.have.property('token');
-      resToken.body.token.should.be.a('string');
-      resToken.body.should.have.property('header');
-      resToken.body.token.should.be.a('string');
-      return resToken.body;
-    });
-};
-
-const signInAsDefaultUser = () => {
-  return request
-    .post('/users/sessions')
-    .send({
-      email: 'user@wolox.com.ar',
-      password: 'default1234'
-    })
-    .then(resToken => {
-      resToken.should.have.status(200);
-      resToken.should.be.json;
-      resToken.body.should.have.property('token');
-      resToken.body.token.should.be.a('string');
-      resToken.body.should.have.property('header');
-      resToken.body.token.should.be.a('string');
-      return resToken.body;
-    });
-};
 
 describe('AdminController', () => {
   describe('POST /admin/users', () => {
@@ -73,7 +37,7 @@ describe('AdminController', () => {
     });
 
     it('Should not create an admin, if logged in as regular user', done => {
-      signInAsDefaultUser()
+      UserRequests.signInAsDefaultUser()
         .then(json => {
           return request
             .post('/admin/users')
@@ -93,7 +57,7 @@ describe('AdminController', () => {
     });
 
     it('Should create an admin', done => {
-      signInAsDefaultAdmin()
+      UserRequests.signInAsDefaultAdmin()
         .then(json => {
           return request
             .post('/admin/users')
@@ -136,7 +100,7 @@ describe('AdminController', () => {
           res.should.have.status(201);
           res.should.be.json;
           res.body.id.should.be.a('number');
-          return signInAsDefaultAdmin();
+          return UserRequests.signInAsDefaultAdmin();
         })
         .then(json => {
           return request
@@ -160,7 +124,7 @@ describe('AdminController', () => {
     });
 
     it('Should not create a user with existing email', done => {
-      signInAsDefaultAdmin()
+      UserRequests.signInAsDefaultAdmin()
         .then(json => {
           return request
             .post('/admin/users')
@@ -171,7 +135,7 @@ describe('AdminController', () => {
           res.should.have.status(201);
           res.should.be.json;
           res.body.id.should.be.a('number');
-          return signInAsDefaultAdmin();
+          return UserRequests.signInAsDefaultAdmin();
         })
         .then(json => {
           return request
@@ -211,7 +175,7 @@ describe('AdminController', () => {
     };
 
     it('Should not create a user without email', done => {
-      signInAsDefaultAdmin()
+      UserRequests.signInAsDefaultAdmin()
         .then(json => {
           return request
             .post('/admin/users')
@@ -251,7 +215,7 @@ describe('AdminController', () => {
     };
 
     it('Should not create an user with a short password', done => {
-      signInAsDefaultAdmin()
+      UserRequests.signInAsDefaultAdmin()
         .then(json => {
           return request
             .post('/admin/users')
@@ -291,7 +255,7 @@ describe('AdminController', () => {
     };
 
     it('Should not create an empty user', done => {
-      signInAsDefaultAdmin()
+      UserRequests.signInAsDefaultAdmin()
         .then(json => {
           return request
             .post('/admin/users')
