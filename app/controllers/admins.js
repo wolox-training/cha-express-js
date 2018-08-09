@@ -13,17 +13,17 @@ exports.create = (req, res, next) => {
     .then(hashedPwd => {
       adminObj.password = hashedPwd;
       adminObj.role = 'admin';
-      return User.createAdmin(adminObj);
-    })
-    .then(createdUser => {
-      logger.log({ level: 'info', message: createdUser.firstname });
-      res.status(201).json({
-        id: createdUser.id
-      });
-    })
-    .catch(err => {
-      logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
-      next(errors.databaseError(err));
+      User.createAdmin(adminObj)
+        .then(createdUser => {
+          logger.log({ level: 'info', message: createdUser.firstname });
+          res.status(201).json({
+            id: createdUser.id
+          });
+        })
+        .catch(err => {
+          logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
+          next(errors.databaseError(err));
+        });
     })
     .catch(err => {
       next(errors.defaultError(err));
