@@ -26,7 +26,7 @@ exports.init = app => {
   );
 
   // Albums
-  app.get('/albums', [], AlbumsController.all);
+  app.get('/albums', [Auth.secureFor(['regular', 'admin'])], AlbumsController.all);
 
   // Handles body validation errors
   app.use((err, req, res, next) => {
