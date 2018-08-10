@@ -8,7 +8,7 @@ chai.use(chaiThings);
 
 describe('AlbumsService', () => {
   describe('all', () => {
-    it('Should return a list of albums', done => {
+    it('Should retrieve a list of albums', done => {
       nock(AlbumsService.URL)
         .get('/albums')
         .reply(200, AlbumsService.ALBUMS_SAMPLE);
@@ -21,7 +21,7 @@ describe('AlbumsService', () => {
         .catch(err => done(new Error(`Albums not retrieved: ${err.message}`)));
     });
 
-    it('Should not return a list of albums (too many requests)', done => {
+    it('Should not retrieve a list of albums (too many requests)', done => {
       nock(AlbumsService.URL)
         .get('/albums')
         .reply(429);
@@ -34,7 +34,7 @@ describe('AlbumsService', () => {
         });
     });
 
-    it('Should not return a list of albums (something went wrong on server)', done => {
+    it('Should not retrieve a list of albums (something went wrong on server)', done => {
       nock(AlbumsService.URL)
         .get('/albums')
         .reply(500);

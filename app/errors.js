@@ -20,6 +20,10 @@ exports.databaseError = message =>
     exports.DATABASE_ERROR
   );
 
+exports.EXTERNAL_API_ERROR = 'external_api_error';
+exports.externalApiError = err =>
+  internalError(`Externa api error: ${err.message}`, exports.EXTERNAL_API_ERROR);
+
 exports.NOT_FOUND = 'not_found';
 exports.notFound = resource => internalError(`${resource} not found`, exports.NOT_FOUND);
 
