@@ -25,7 +25,7 @@ exports.session = (req, res, next) => {
           }
           return JwtService.encode({
             id: user.id,
-            role: 'user'
+            role: user.role
           });
         })
         .then(token => {
@@ -44,28 +44,33 @@ exports.session = (req, res, next) => {
   });
 };
 
-exports.create = (req, res, next) => {
-  const userObj = req.body || {};
-  return bcrypt
-    .hash(userObj.password, 10)
-    .then(hashedPwd => {
-      userObj.password = hashedPwd;
-      return User.create(userObj);
-    })
-    .then(createdUser => {
-      logger.log({ level: 'info', message: createdUser.firstname });
-      res.status(201).json({
-        id: createdUser.id
+const create = persist => {
+  return (req, res, next) => {
+    const userObj = req.body || {};
+    return bcrypt
+      .hash(userObj.password, 10)
+      .then(hashedPwd => {
+        userObj.password = hashedPwd;
+        return persist(userObj);
+      })
+      .then(createdUser => {
+        logger.log({ level: 'info', message: createdUser.firstname });
+        res.status(201).json({
+          id: createdUser.id
+        });
+      })
+      .catch(err => {
+        logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
+        next(errors.databaseError(err));
+      })
+      .catch(err => {
+        next(errors.defaultError(err));
       });
-    })
-    .catch(err => {
-      logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
-      next(errors.databaseError(err));
-    })
-    .catch(err => {
-      next(errors.defaultError(err));
-    });
+  };
 };
+
+exports.createUser = create(User.createUser);
+exports.createAdmin = create(User.createAdmin);
 
 exports.get = (req, res, next) => {
   const id = req.params.id;
