@@ -17,7 +17,7 @@ exports.session = (req, res, next) => {
         if (!match) {
           next(errors.invalidCredentials(new Error('invalid password')));
         }
-        JwtService.encode({ id: user.id, role: user.role })
+        return JwtService.encode({ id: user.id, role: user.role })
           .then(token => {
             logger.log({ level: 'info', message: 'A session token was given' });
             res.status(200).json({
@@ -42,7 +42,7 @@ const create = persist => {
       .hash(userObj.password, 10)
       .then(hashedPwd => {
         userObj.password = hashedPwd;
-        persist(userObj)
+        return persist(userObj)
           .then(createdUser => {
             logger.log({ level: 'info', message: createdUser.firstname });
             res.status(201).json({
