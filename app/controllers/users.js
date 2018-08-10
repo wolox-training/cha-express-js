@@ -11,34 +11,25 @@ const User = require('../models').User;
 exports.session = (req, res, next) => {
   const creds = req.body || {};
 
-  return User.find({
-    where: {
-      email: creds.email
-    }
-  }).then(user => {
+  return User.find({ where: { email: creds.email } }).then(user => {
     if (user) {
-      return bcrypt
-        .compare(creds.password, user.password)
-        .then(match => {
-          if (!match) {
-            next(errors.invalidCredentials(new Error('invalid password')));
-          }
-          return JwtService.encode({
-            id: user.id,
-            role: user.role
+      return bcrypt.compare(creds.password, user.password).then(match => {
+        if (!match) {
+          next(errors.invalidCredentials(new Error('invalid password')));
+        }
+        JwtService.encode({ id: user.id, role: user.role })
+          .then(token => {
+            logger.log({ level: 'info', message: 'A session token was given' });
+            res.status(200).json({
+              header: JwtService.AUTH_HEADER,
+              token: `Bearer ${token}`
+            });
+          })
+          .catch(err => {
+            logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
+            next(errors.invalidCredentials(err));
           });
-        })
-        .then(token => {
-          logger.log({ level: 'info', message: 'A session token was given' });
-          res.status(200).json({
-            header: JwtService.AUTH_HEADER,
-            token: `Bearer ${token}`
-          });
-        })
-        .catch(err => {
-          logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
-          next(errors.invalidCredentials(err));
-        });
+      });
     }
     next(errors.invalidCredentials(new Error('invalid email')));
   });
@@ -51,17 +42,17 @@ const create = persist => {
       .hash(userObj.password, 10)
       .then(hashedPwd => {
         userObj.password = hashedPwd;
-        return persist(userObj);
-      })
-      .then(createdUser => {
-        logger.log({ level: 'info', message: createdUser.firstname });
-        res.status(201).json({
-          id: createdUser.id
-        });
-      })
-      .catch(err => {
-        logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
-        next(errors.databaseError(err));
+        persist(userObj)
+          .then(createdUser => {
+            logger.log({ level: 'info', message: createdUser.firstname });
+            res.status(201).json({
+              id: createdUser.id
+            });
+          })
+          .catch(err => {
+            logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
+            next(errors.databaseError(err));
+          });
       })
       .catch(err => {
         next(errors.defaultError(err));
