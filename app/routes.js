@@ -4,18 +4,24 @@ const { Validator, ValidationError } = require('express-json-validator-middlewar
 const Auth = require('./middlewares/auth');
 
 const UserJsonSchema = require('./json-schemas/user');
+const AdminJsonSchema = require('./json-schemas/user');
 
 const validate = new Validator({ allErrors: true }).validate;
 
 exports.init = app => {
   app.get(
     '/users',
-    [Auth.secureFor(['user']), validate({ body: UserJsonSchema.forList })],
+    [Auth.secureFor(['regular']), validate({ body: UserJsonSchema.forList })],
     UsersController.list
   );
   app.get('/users/:id', [], UsersController.get);
-  app.post('/users', [validate({ body: UserJsonSchema.forCreate })], UsersController.create);
+  app.post('/users', [validate({ body: UserJsonSchema.forCreate })], UsersController.createUser);
   app.post('/users/sessions', [validate({ body: UserJsonSchema.forSession })], UsersController.session);
+  app.post(
+    '/admin/users',
+    [Auth.secureFor(['admin']), validate({ body: AdminJsonSchema.forCreate })],
+    UsersController.createAdmin
+  );
 
   // Handles body validation errors
   app.use((err, req, res, next) => {

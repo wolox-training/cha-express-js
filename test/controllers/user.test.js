@@ -40,7 +40,6 @@ describe('UserController', () => {
           done();
         })
         .catch(err => {
-          console.log(JSON.stringify(err, null, 2));
           done(new Error(`User not fetch: ${err.message}`));
         })
         .catch(err => {
@@ -322,26 +321,12 @@ describe('UserController', () => {
   });
 
   describe('GET /users', () => {
-    const createUserAndSignIn = () => {
-      const user = {
-        firstname: 'John',
-        lastname: 'Doe',
-        email: 'john.doe@wolox.com.ar',
-        password: 'johndoereloaded'
-      };
-
+    const signInAsDefaultUser = () => {
       return request
-        .post('/users')
-        .send(user)
-        .then(res => {
-          res.should.have.status(201);
-          res.should.be.json;
-          res.body.should.have.property('id');
-          res.body.id.should.be.a('number');
-          return request.post('/users/sessions').send({
-            email: user.email,
-            password: user.password
-          });
+        .post('/users/sessions')
+        .send({
+          email: 'user@wolox.com.ar',
+          password: 'default1234'
         })
         .then(resToken => {
           resToken.should.have.status(200);
@@ -401,7 +386,7 @@ describe('UserController', () => {
     });
 
     it('Should return an error for invalid page number', done => {
-      createUserAndSignIn()
+      signInAsDefaultUser()
         .then(json => {
           return request
             .get('/users')
@@ -439,7 +424,7 @@ describe('UserController', () => {
     });
 
     it('Should return and error for invalid page size', done => {
-      createUserAndSignIn()
+      signInAsDefaultUser()
         .then(json => {
           return request
             .get('/users')
@@ -477,7 +462,7 @@ describe('UserController', () => {
     });
 
     it('Should retrieve the first users page list', done => {
-      createUserAndSignIn()
+      signInAsDefaultUser()
         .then(json => {
           return request.get('/users').set(json.header, json.token);
         })
@@ -488,7 +473,7 @@ describe('UserController', () => {
           res.body.page_number.should.be.a('number');
           res.body.should.have.property('users');
           res.body.users.should.all.be.an('array');
-          res.body.users.should.have.lengthOf(1);
+          res.body.users.should.have.lengthOf(2); // current user and default admin
           res.body.should.have.property('pages_left');
           res.body.pages_left.should.be.a('number');
           res.body.should.have.property('overflow');
@@ -501,7 +486,7 @@ describe('UserController', () => {
     });
 
     it('Should retrieve a users page list that does not exists', done => {
-      createUserAndSignIn()
+      signInAsDefaultUser()
         .then(json => {
           return request
             .get('/users')
@@ -537,7 +522,7 @@ describe('UserController', () => {
       const tenPromisesUserCreation = createSomeUsers(10);
 
       Promise.all(tenPromisesUserCreation).then(() => {
-        createUserAndSignIn()
+        signInAsDefaultUser()
           .then(json => {
             return request
               .get('/users')
