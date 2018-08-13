@@ -9,6 +9,7 @@ const statusCodes = {
   [errors.NOT_ALLOWED]: 401,
   [errors.NOT_FOUND]: 404,
   [errors.DATABASE_ERROR]: 503,
+  [errors.EXTERNAL_API_ERROR]: 503,
   [errors.DEFAULT_ERROR]: 500
 };
 
