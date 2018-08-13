@@ -15,5 +15,7 @@ exports.all = (req, res, next) => {
 };
 
 exports.buy = (req, res, next) => {
-  res.status(200).json({});
+  res.status(200).json({
+    id: 1
+  });
 };

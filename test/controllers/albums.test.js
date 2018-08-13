@@ -66,7 +66,7 @@ describe('AlbumsController', () => {
 
   describe('POST /albums/:id', () => {
     const albumId = 1;
-    it('Should not purchase an album, if not logged', done => {
+    it('Should not buy an album, if not logged', done => {
       request
         .post(`/albums/${albumId}`)
         .then(res => done(new Error('Successful response - This should not be called')))
@@ -77,6 +77,22 @@ describe('AlbumsController', () => {
           err.response.body.message.should.include('no auth header found:');
           done();
         });
+    });
+
+    it('Should buy an album', done => {
+      UserRequests.signInAsDefaultAdmin().then(json => {
+        request
+          .post(`/albums/${albumId}`)
+          .set(json.header, json.token)
+          .then(res => {
+            res.should.have.status(200);
+            res.should.be.json;
+            res.body.should.have.property('id');
+            res.body.id.should.be.a('number');
+            done();
+          })
+          .catch(err => done(new Error(`Album not purchase: ${err.message}`)));
+      });
     });
   });
 });
