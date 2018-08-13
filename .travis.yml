@@ -1,22 +1,23 @@
 language: node_js
-
 node_js:
-  - "8.9.4"
-
+- 8.9.4
 sudo: true
-
 env:
-  - CXX=g++-4.8
+- CXX=g++-4.8
 addons:
   apt:
     sources:
     - ubuntu-toolchain-r-test
     packages:
     - g++-4.8
-
 services:
-  - postgresql
-
+- postgresql
 before_script:
-  - psql -c "CREATE DATABASE bookstest;" -U postgres
-  - node_modules/.bin/sequelize db:migrate
+- psql -c "CREATE DATABASE bookstest;" -U postgres
+- node_modules/.bin/sequelize db:migrate
+deploy:
+  provider: heroku
+  api_key:
+    secure: TXghAVhLjk8Hw8nns+7RWmMcLGrhQoRgnFJHVO2pUmG5/+MMWZZ8lc28sxX4RAP8VpAg+00AkOeeyELzWvfFdYtSLXTixez80EozHuq0LEXwFoTn+to3lUvGjISQHC0ZCwkapH0/G0xjY0m6jrT6cKLN9RJGFoOXzdzTohb9vJCfEEYY1tbxmRSVEOo4vcY++lbTjH/1887EKKLjfkkjwotcglDy2fUJjvIMOS9fTyJT2y/u72r9eNLFrUsKbfR5Oz1j+NbOOfDkQbstAfNvN32SViROpv8/HjN6bPIz/WUgWPnO0iRf9PXatlXPXjw94H7WshuzhjTtX3o9++UySgDGqggphn95q09oF90zcmlIaj7gbnQpxSBhBqHNXWO/jPmxKVUFCie2RrbAi1ezBBMDC6Cl5Yc9QOPttLx/K/X3JUbNZut/bYrbC5+bVkEFlp/CXgVd8JbIUu32tJAgTush83zJnzLiJq0Dd5tUBuEzFDbdJJx/dioS4Tzhl/ESLSax0jVd5kqxNxfzCl2IXl+xJRex5q1y2HMx0RitOZWYyzrVV5171pVMdQbtslMWFjkJo9EginXwFjTJC8uopYR0b23eVtteaYnDfjT7U+l0qZ/GZD4BUWmh+Pfp0mPgQr8TFudeIVVspPfwOlt/MZ5N8iFEYvvyVUCNGxp5Gb4=
+  app:
+    master: wolox-nodejs-training
