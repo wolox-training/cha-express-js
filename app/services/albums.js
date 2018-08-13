@@ -25,6 +25,12 @@ exports.ALBUMS_SAMPLE = [
   }
 ];
 
+exports.ALBUM_SAMPLE = id => exports.ALBUMS_SAMPLE[id - 1];
+
 exports.all = () => {
   return axios(`${exports.URL}/albums`).then(res => res.data);
+};
+
+exports.getById = id => {
+  return axios(`${exports.URL}/albums/${id}`).then(res => res.data);
 };

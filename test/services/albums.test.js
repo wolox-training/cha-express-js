@@ -47,4 +47,20 @@ describe('AlbumsService', () => {
         });
     });
   });
+
+  describe('getById', () => {
+    const id = 2;
+    it(`Should not retrieve an album with id: ${id}`, done => {
+      nock(AlbumsService.URL)
+        .get(`/albums/${id}`)
+        .reply(200, AlbumsService.ALBUM_SAMPLE(id));
+
+      AlbumsService.getById(id)
+        .then(albums => {
+          albums.should.eql(AlbumsService.ALBUM_SAMPLE(id));
+          done();
+        })
+        .catch(err => done(new Error(`Album not retrieved: ${err.message}`)));
+    });
+  });
 });
