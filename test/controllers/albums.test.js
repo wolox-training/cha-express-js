@@ -63,4 +63,20 @@ describe('AlbumsController', () => {
       });
     });
   });
+
+  describe('POST /albums/:id', () => {
+    const albumId = 1;
+    it('Should not purchase an album, if not logged', done => {
+      request
+        .post(`/albums/${albumId}`)
+        .then(res => done(new Error('Successful response - This should not be called')))
+        .catch(err => {
+          err.should.have.status(401);
+          err.response.should.be.json;
+          err.response.body.should.have.property('message');
+          err.response.body.message.should.include('no auth header found:');
+          done();
+        });
+    });
+  });
 });

@@ -13,3 +13,7 @@ exports.all = (req, res, next) => {
       next(errors.externalApiError(err));
     });
 };
+
+exports.buy = (req, res, next) => {
+  res.status(200).json({});
+};
