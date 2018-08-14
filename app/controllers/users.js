@@ -130,3 +130,7 @@ exports.list = (req, res, next) => {
       next(errors.databaseError(err));
     });
 };
+
+exports.boughtAlbums = (req, res, next) => {
+  res.status(200).json([]);
+};

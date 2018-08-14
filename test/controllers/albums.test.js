@@ -182,4 +182,21 @@ describe('AlbumsController', () => {
       });
     });
   });
+
+  describe('GET /users/:user_id/albums', () => {
+    const userId = 1;
+    it('Should not get bought albums, if not logged', done => {
+      request
+        .get(`/users/${userId}/albums`)
+        .then(res => done(new Error('Successful response - This should not be called')))
+        .catch(err => {
+          console.log(JSON.stringify(err, null, 2));
+          err.should.have.status(401);
+          err.response.should.be.json;
+          err.response.body.should.have.property('message');
+          err.response.body.message.should.include('no auth header found:');
+          done();
+        });
+    });
+  });
 });
