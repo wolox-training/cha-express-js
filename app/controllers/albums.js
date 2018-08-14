@@ -19,7 +19,7 @@ exports.buy = (req, res, next) => {
   const albumId = req.params.id;
   return AlbumsService.getById(albumId)
     .then(album => {
-      AlbumPurchase.make(req.user.id, album.id)
+      return AlbumPurchase.make(req.user.id, album.id)
         .then(purchase => {
           res.status(200).json(purchase);
         })
