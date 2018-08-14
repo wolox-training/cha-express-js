@@ -5,8 +5,10 @@ const logger = require('../logger');
 const errors = require('../errors');
 
 const JwtService = require('../services/jwt');
+const AlbumService = require('../services/albums');
 
 const User = require('../models').User;
+const AlbumPurchase = require('../models').AlbumPurchase;
 
 exports.session = (req, res, next) => {
   const creds = req.body || {};
@@ -133,10 +135,19 @@ exports.list = (req, res, next) => {
 
 exports.boughtAlbums = (req, res, next) => {
   const id = req.params.id;
-  if (req.user.role === 'admin') {
-    res.status(200).json([]);
-  } else if (req.user.id === id) {
-    res.status(200).json([]);
+  if (User.canSeeBoughtAlbumsFor(req.user, id)) {
+    AlbumPurchase.findAll({
+      where: {
+        userId: id
+      }
+    })
+      .then(purchases => {
+        const albumsPromises = purchases.map(p => p.albumId).map(albumId => AlbumService.getById(albumId));
+        Promise.all(albumsPromises)
+          .then(albums => res.status(200).json(albums))
+          .catch(err => next(errors.externalApiError(err)));
+      })
+      .catch(err => errors.databaseError(err));
   } else {
     next(errors.forbiddenError(new Error('You cannot see others albums')));
   }
