@@ -30,12 +30,10 @@ exports.buy = (req, res, next) => {
     })
     .catch(err => {
       logger.log({ level: 'error', message: err });
-      switch (err.response.status) {
-        case 404:
-          next(errors.notFound('album'));
-          break;
-        default:
-          next(errors.defaultError(err.message));
+      if (err.response.status === 404) {
+        next(errors.notFound('album'));
+      } else {
+        next(errors.defaultError(err.message));
       }
     });
 };

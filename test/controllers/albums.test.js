@@ -174,6 +174,9 @@ describe('AlbumsController', () => {
           .catch(err => {
             err.should.have.status(404);
             err.response.should.be.json;
+            err.response.body.should.have.property('message');
+            err.response.body.message.should.be.a('string');
+            err.response.body.message.should.equal('album not found');
             done();
           });
       });
