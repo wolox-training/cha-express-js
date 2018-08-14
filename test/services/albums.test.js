@@ -47,4 +47,34 @@ describe('AlbumsService', () => {
         });
     });
   });
+
+  describe('getById', () => {
+    const id = 2;
+    it(`Should retrieve an album with id: ${id}`, done => {
+      nock(AlbumsService.URL)
+        .get(`/albums/${id}`)
+        .reply(200, AlbumsService.ALBUM_SAMPLE(id));
+
+      AlbumsService.getById(id)
+        .then(albums => {
+          albums.should.eql(AlbumsService.ALBUM_SAMPLE(id));
+          done();
+        })
+        .catch(err => done(new Error(`Album not retrieved: ${err.message}`)));
+    });
+
+    const notFoundId = 10;
+    it(`Should not retrieve an album with id: ${notFoundId}`, done => {
+      nock(AlbumsService.URL)
+        .get(`/albums/${notFoundId}`)
+        .reply(404);
+
+      AlbumsService.getById(notFoundId)
+        .then(albums => done(new Error('Successful response - should not be called')))
+        .catch(err => {
+          err.response.should.have.status(404);
+          done();
+        });
+    });
+  });
 });

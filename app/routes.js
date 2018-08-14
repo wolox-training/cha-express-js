@@ -27,6 +27,7 @@ exports.init = app => {
 
   // Albums
   app.get('/albums', [Auth.secureFor(['regular', 'admin'])], AlbumsController.all);
+  app.post('/albums/:id', [Auth.secureFor(['regular', 'admin'])], AlbumsController.buy);
 
   // Handles body validation errors
   app.use((err, req, res, next) => {

@@ -33,3 +33,7 @@ exports.invalidCredentials = err => internalError(err.message, exports.INVALID_C
 exports.NOT_ALLOWED = 'not_allowed';
 exports.notAllowed = err =>
   internalError(`You are not allowed to consume this resource: ${err.message}`, exports.NOT_ALLOWED);
+
+exports.FORBIDDEN = 'forbidden';
+exports.forbiddenError = err =>
+  internalError(`The request has been forbidden: ${err.message}`, exports.FORBIDDEN);

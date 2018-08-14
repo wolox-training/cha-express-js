@@ -63,4 +63,123 @@ describe('AlbumsController', () => {
       });
     });
   });
+
+  describe('POST /albums/:id', () => {
+    const albumId = 1;
+    it('Should not buy an album, if not logged', done => {
+      request
+        .post(`/albums/${albumId}`)
+        .then(res => done(new Error('Successful response - This should not be called')))
+        .catch(err => {
+          err.should.have.status(401);
+          err.response.should.be.json;
+          err.response.body.should.have.property('message');
+          err.response.body.message.should.include('no auth header found:');
+          done();
+        });
+    });
+
+    it('Should buy an album, if logged as user', done => {
+      UserRequests.signInAsDefaultUser().then(json => {
+        request
+          .post(`/albums/${albumId}`)
+          .set(json.header, json.token)
+          .then(res => {
+            res.should.have.status(200);
+            res.should.be.json;
+            res.body.should.have.property('id');
+            res.body.id.should.be.a('number');
+            done();
+          })
+          .catch(err => done(new Error(`Album not purchase: ${err.message}`)));
+      });
+    });
+
+    it('Should buy an album, if logged as admin', done => {
+      UserRequests.signInAsDefaultAdmin().then(json => {
+        request
+          .post(`/albums/${albumId}`)
+          .set(json.header, json.token)
+          .then(res => {
+            res.should.have.status(200);
+            res.should.be.json;
+            res.body.should.have.property('id');
+            res.body.id.should.be.a('number');
+            done();
+          })
+          .catch(err => done(new Error(`Album not purchase: ${err.message}`)));
+      });
+    });
+
+    it('Should not buy an album twice, if logged as user', done => {
+      UserRequests.signInAsDefaultUser().then(json => {
+        request
+          .post(`/albums/${albumId}`)
+          .set(json.header, json.token)
+          .then(res => {
+            res.should.have.status(200);
+            res.should.be.json;
+            res.body.should.have.property('id');
+            res.body.id.should.be.a('number');
+            request
+              .post(`/albums/${albumId}`)
+              .set(json.header, json.token)
+              .then(resTwo => done(new Error('Successful response - This should not be called')))
+              .catch(err => {
+                err.should.have.status(403);
+                err.response.should.be.json;
+                err.response.body.should.have.property('message');
+                err.response.body.message.should.be.a('string');
+                err.response.body.message.should.include('You cannot buy the same album twice');
+                done();
+              });
+          })
+          .catch(err => done(new Error(`Album not purchase: ${err.message}`)));
+      });
+    });
+
+    it('Should not buy an album twice, if logged as admin', done => {
+      UserRequests.signInAsDefaultAdmin().then(json => {
+        request
+          .post(`/albums/${albumId}`)
+          .set(json.header, json.token)
+          .then(res => {
+            res.should.have.status(200);
+            res.should.be.json;
+            res.body.should.have.property('id');
+            res.body.id.should.be.a('number');
+            request
+              .post(`/albums/${albumId}`)
+              .set(json.header, json.token)
+              .then(resTwo => done(new Error('Successful response - This should not be called')))
+              .catch(err => {
+                err.should.have.status(403);
+                err.response.should.be.json;
+                err.response.body.should.have.property('message');
+                err.response.body.message.should.be.a('string');
+                err.response.body.message.should.include('You cannot buy the same album twice');
+                done();
+              });
+          })
+          .catch(err => done(new Error(`Album not purchase: ${err.message}`)));
+      });
+    });
+
+    it('Should not buy an album, if not found', done => {
+      UserRequests.signInAsDefaultAdmin().then(json => {
+        request
+          .post(`/albums/-1`)
+          .set(json.header, json.token)
+          .then(res => done(new Error('Successful response - This should not be called')))
+          .catch(err => {
+            err.should.have.status(404);
+            err.response.should.be.json;
+            err.response.body.should.have.property('message');
+            err.response.body.message.should.be.a('string');
+            err.response.body.message.should.equal('album not found');
+            done();
+          });
+      });
+    });
+  });
 });
