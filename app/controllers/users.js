@@ -34,7 +34,8 @@ exports.session = (req, res, next) => {
           logger.log({ level: 'info', message: 'A session token was given' });
           res.status(200).json({
             header: JwtService.AUTH_HEADER,
-            token: `Bearer ${token}`
+            token: `Bearer ${token}`,
+            userId: user.id
           });
         })
         .catch(err => {
@@ -134,7 +135,7 @@ exports.list = (req, res, next) => {
 };
 
 exports.boughtAlbums = (req, res, next) => {
-  const id = req.params.id;
+  const id = parseInt(req.params.id);
   if (User.canSeeBoughtAlbumsFor(req.user, id)) {
     AlbumPurchase.findAll({
       where: {

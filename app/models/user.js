@@ -36,8 +36,9 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   User.canSeeBoughtAlbumsFor = (user, id) => {
-    const criteria = user.role === 'admin' || (user.role === 'regular' && user.id === id);
-    console.log(`DEBUG => ${criteria}`);
+    const isAdmin = user.role === 'admin';
+    const userWithSameId = user.role === 'regular' && user.id === id;
+    const criteria = isAdmin || userWithSameId;
     return criteria;
   };
 

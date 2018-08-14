@@ -184,15 +184,15 @@ describe('AlbumsController', () => {
   });
 
   describe('GET /users/:user_id/albums', () => {
-    const userId = 2;
     it('Should not retrive bought albums from user, if not logged', done => {
       request
-        .get(`/users/${userId}/albums`)
+        .get(`/users/10/albums`)
         .then(res => done(new Error('Successful response - This should not be called')))
         .catch(err => {
           err.should.have.status(401);
           err.response.should.be.json;
           err.response.body.should.have.property('message');
+          err.response.body.message.should.be.a('string');
           err.response.body.message.should.include('no auth header found:');
           done();
         });
@@ -201,12 +201,47 @@ describe('AlbumsController', () => {
     it('Should retrieve bought albums from user, if logged as admin', done => {
       UserRequests.signInAsDefaultAdmin().then(json => {
         request
-          .get(`/users/${userId}/albums`)
+          .get(`/users/${json.userId + 1}/albums`)
           .set(json.header, json.token)
           .then(res => {
+            res.should.have.status(200);
+            res.should.be.json;
+            res.body.should.be.an('array');
             done();
           })
           .catch(err => done(new Error(`Bought albums not retrieved: ${err.message}`)));
+      });
+    });
+
+    it('Should retrieve its bought albums, if logged as user', done => {
+      UserRequests.signInAsDefaultUser().then(json => {
+        request
+          .get(`/users/${json.userId}/albums`)
+          .set(json.header, json.token)
+          .then(res => {
+            res.should.have.status(200);
+            res.should.be.json;
+            res.body.should.be.an('array');
+            done();
+          })
+          .catch(err => done(new Error(`Bought albums not retrieved: ${err.message}`)));
+      });
+    });
+
+    it('Should not retrieve bought albums from another user, if logged as user', done => {
+      UserRequests.signInAsDefaultUser().then(json => {
+        request
+          .get(`/users/${json.userId + 1}/albums`)
+          .set(json.header, json.token)
+          .then(res => done(new Error('Successful response - This should not be called')))
+          .catch(err => {
+            err.should.have.status(403);
+            err.response.should.be.json;
+            err.response.body.should.have.property('message');
+            err.response.body.message.should.be.a('string');
+            err.response.body.message.should.include('You cannot see others albums');
+            done();
+          });
       });
     });
   });
