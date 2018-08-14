@@ -132,5 +132,12 @@ exports.list = (req, res, next) => {
 };
 
 exports.boughtAlbums = (req, res, next) => {
-  res.status(200).json([]);
+  const id = req.params.id;
+  if (req.user.role === 'admin') {
+    res.status(200).json([]);
+  } else if (req.user.id === id) {
+    res.status(200).json([]);
+  } else {
+    next(errors.forbiddenError(new Error('You cannot see others albums')));
+  }
 };
