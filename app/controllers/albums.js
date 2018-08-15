@@ -19,13 +19,16 @@ exports.buy = (req, res, next) => {
   const albumId = req.params.id;
   return AlbumsService.getById(albumId)
     .then(album => {
-      AlbumPurchase.make(req.user.id, album.id)
+      return AlbumPurchase.create({ userId: req.user.id, albumId: album.id })
         .then(purchase => {
           res.status(200).json(purchase);
         })
         .catch(err => {
           logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
-          next(errors.forbiddenError(err));
+          if (err.name === 'SequelizeUniqueConstraintError') {
+            next(errors.forbiddenError(new Error('You cannot buy the same album twice')));
+          }
+          next(errors.defaultError(err.message));
         });
     })
     .catch(err => {
