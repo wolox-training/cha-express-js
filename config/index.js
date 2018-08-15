@@ -44,7 +44,8 @@ const config = {
     },
     session: {
       auth_header: 'auth_token',
-      jwt_secret: process.env.NODE_API_JWT_SECRET
+      jwt_secret: process.env.NODE_API_JWT_SECRET,
+      jwt_expire_time_secs: parseInt(process.env.NODE_API_JWT_EXPIRE_TIME_SECS)
     },
     rollbar: {
       accessToken: process.env.ROLLBAR_ACCESS_TOKEN,

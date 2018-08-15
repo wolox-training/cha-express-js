@@ -28,3 +28,18 @@ exports.signInAsDefaultUser = () => {
       return resToken.body;
     });
 };
+
+exports.createSomeUsers = number => {
+  const promisesUserCreation = [];
+  for (let index = 0; index < number; index++) {
+    promisesUserCreation.push(
+      request.post('/users').send({
+        firstname: `John${index}`,
+        lastname: `Doe${index}`,
+        email: `john.doe${index}@wolox.com.ar`,
+        password: `johndoe${index}`
+      })
+    );
+  }
+  return promisesUserCreation;
+};

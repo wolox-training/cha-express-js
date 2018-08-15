@@ -31,7 +31,7 @@ describe('AlbumsController', () => {
       UserRequests.signInAsDefaultUser().then(json => {
         request
           .get('/albums')
-          .set(json.header, json.token)
+          .set(json.header, json.token.raw)
           .then(res => {
             res.should.have.status(200);
             res.should.be.json;
@@ -49,7 +49,7 @@ describe('AlbumsController', () => {
       UserRequests.signInAsDefaultAdmin().then(json => {
         request
           .get('/albums')
-          .set(json.header, json.token)
+          .set(json.header, json.token.raw)
           .then(res => {
             res.should.have.status(200);
             res.should.be.json;
@@ -83,7 +83,7 @@ describe('AlbumsController', () => {
       UserRequests.signInAsDefaultUser().then(json => {
         request
           .post(`/albums/${albumId}`)
-          .set(json.header, json.token)
+          .set(json.header, json.token.raw)
           .then(res => {
             res.should.have.status(200);
             res.should.be.json;
@@ -99,7 +99,7 @@ describe('AlbumsController', () => {
       UserRequests.signInAsDefaultAdmin().then(json => {
         request
           .post(`/albums/${albumId}`)
-          .set(json.header, json.token)
+          .set(json.header, json.token.raw)
           .then(res => {
             res.should.have.status(200);
             res.should.be.json;
@@ -115,7 +115,7 @@ describe('AlbumsController', () => {
       UserRequests.signInAsDefaultUser().then(json => {
         request
           .post(`/albums/${albumId}`)
-          .set(json.header, json.token)
+          .set(json.header, json.token.raw)
           .then(res => {
             res.should.have.status(200);
             res.should.be.json;
@@ -123,7 +123,7 @@ describe('AlbumsController', () => {
             res.body.id.should.be.a('number');
             request
               .post(`/albums/${albumId}`)
-              .set(json.header, json.token)
+              .set(json.header, json.token.raw)
               .then(resTwo => done(new Error('Successful response - This should not be called')))
               .catch(err => {
                 err.should.have.status(403);
@@ -142,7 +142,7 @@ describe('AlbumsController', () => {
       UserRequests.signInAsDefaultAdmin().then(json => {
         request
           .post(`/albums/${albumId}`)
-          .set(json.header, json.token)
+          .set(json.header, json.token.raw)
           .then(res => {
             res.should.have.status(200);
             res.should.be.json;
@@ -150,7 +150,7 @@ describe('AlbumsController', () => {
             res.body.id.should.be.a('number');
             request
               .post(`/albums/${albumId}`)
-              .set(json.header, json.token)
+              .set(json.header, json.token.raw)
               .then(resTwo => done(new Error('Successful response - This should not be called')))
               .catch(err => {
                 err.should.have.status(403);
@@ -169,7 +169,7 @@ describe('AlbumsController', () => {
       UserRequests.signInAsDefaultAdmin().then(json => {
         request
           .post(`/albums/-1`)
-          .set(json.header, json.token)
+          .set(json.header, json.token.raw)
           .then(res => done(new Error('Successful response - This should not be called')))
           .catch(err => {
             err.should.have.status(404);
