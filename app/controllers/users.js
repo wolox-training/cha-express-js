@@ -141,7 +141,7 @@ exports.boughtAlbums = (req, res, next) => {
     })
       .then(purchases => {
         const albumsPromises = purchases.map(p => p.albumId).map(albumId => AlbumService.getById(albumId));
-        Promise.all(albumsPromises)
+        return Promise.all(albumsPromises)
           .then(albums => res.status(200).json(albums))
           .catch(err => {
             logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
@@ -167,7 +167,7 @@ exports.photosBoughtAlbum = (req, res, next) => {
   })
     .then(purchase => {
       if (purchase) {
-        AlbumService.getPhotosForAlbumWithId(purchase.albumId)
+        return AlbumService.getPhotosForAlbumWithId(purchase.albumId)
           .then(photos => {
             res.status(200).json(photos);
           })
