@@ -8,15 +8,16 @@ exports.AUTH_HEADER = config.common.session.auth_header; // 'auth_token';
 
 exports.encode = toEncode => {
   return new Promise((res, rej) => {
-    toEncode.exp = Math.floor(Date.now() / 1000) + JWT_EXPIRE_TIME_SECS;
+    const iat = Math.floor(Date.now() / 1000);
+    toEncode.exp = iat + JWT_EXPIRE_TIME_SECS;
     jwt.sign(toEncode, SECRET, (err, token) => {
       if (err) {
         rej(err);
       } else {
         res({
           raw: `Bearer ${token}`,
-          expireTs: toEncode.exp,
-          expiresIn: JWT_EXPIRE_TIME_SECS
+          exp: toEncode.exp,
+          iat
         });
       }
     });

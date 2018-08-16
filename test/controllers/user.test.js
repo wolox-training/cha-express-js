@@ -251,10 +251,10 @@ describe('UserController', () => {
               resTwo.body.should.have.property('token');
               resTwo.body.token.should.have.property('raw');
               resTwo.body.token.raw.should.be.a('string');
-              resTwo.body.token.should.have.property('expireTs');
-              resTwo.body.token.expireTs.should.be.a('number');
-              resTwo.body.token.should.have.property('expiresIn');
-              resTwo.body.token.expiresIn.should.be.a('number');
+              resTwo.body.token.should.have.property('exp');
+              resTwo.body.token.exp.should.be.a('number');
+              resTwo.body.token.should.have.property('iat');
+              resTwo.body.token.iat.should.be.a('number');
               done();
             })
             .catch(err => {
@@ -340,18 +340,35 @@ describe('UserController', () => {
     const expireTime = config.common.session.jwt_expire_time_secs;
     it(`Should return a token that expires in ${expireTime}ms`, done => {
       UserRequests.signInAsDefaultUser()
-        .then(json => {
-          json.should.have.property('token');
-          json.token.should.have.property('raw');
-          json.token.raw.should.be.a('string');
-          json.token.should.have.property('expireTs');
-          json.token.expireTs.should.be.a('number');
-          json.token.should.have.property('expiresIn');
-          json.token.expiresIn.should.be.a('number');
-          json.token.expiresIn.should.be.equal(expireTime);
+        .then(session => {
+          session.should.have.property('token');
+          session.token.should.have.property('raw');
+          session.token.raw.should.be.a('string');
+          session.token.should.have.property('exp');
+          session.token.exp.should.be.a('number');
+          session.token.should.have.property('iat');
+          session.token.iat.should.be.a('number');
+          session.token.iat.should.be.equal(session.token.exp - expireTime);
           done();
         })
         .catch(err => new Error(`Could not logged in as user: ${err}`));
+    });
+
+    it(`Should revoke users list request, due to expired token session`, done => {
+      const session = UserRequests.useUserExpiredSession();
+      request
+        .get('/users')
+        .set(session.header, session.token.raw)
+        .then(res => {
+          done(new Error('Successful response - This should not be called'));
+        })
+        .catch(err => {
+          err.should.have.status(401);
+          err.response.should.be.json;
+          err.response.body.should.have.property('message');
+          err.response.body.message.should.include('jwt expired');
+          done();
+        });
     });
   });
 
@@ -388,172 +405,169 @@ describe('UserController', () => {
     });
 
     it('Should return an error for invalid page number', done => {
-      UserRequests.signInAsDefaultUser()
-        .then(json => {
-          return request
-            .get('/users')
-            .set(json.header, json.token.raw)
-            .send({
-              page_number: -1,
-              page_size: 10
-            });
-        })
-        .then(res => {
-          done(new Error('Successful response - This should not be called'));
-        })
-        .catch(err => {
-          err.should.have.status(400);
-          err.response.should.be.json;
-          err.response.body.should.have.property('name');
-          err.response.body.should.have.property('validationErrors');
-          err.response.body.validationErrors.should.have.property('body');
-          err.response.body.validationErrors.body.should.be.an('array');
-          err.response.body.validationErrors.body.should.deep.include.members([
-            {
-              keyword: 'minimum',
-              dataPath: '.page_number',
-              schemaPath: '#/properties/page_number/minimum',
-              params: {
-                comparison: '>=',
-                limit: 1,
-                exclusive: false
-              },
-              message: 'should be >= 1'
-            }
-          ]);
-          done();
-        });
+      UserRequests.signInAsDefaultUser().then(session => {
+        request
+          .get('/users')
+          .set(session.header, session.token.raw)
+          .send({
+            page_number: -1,
+            page_size: 10
+          })
+          .then(res => {
+            done(new Error('Successful response - This should not be called'));
+          })
+          .catch(err => {
+            err.should.have.status(400);
+            err.response.should.be.json;
+            err.response.body.should.have.property('name');
+            err.response.body.should.have.property('validationErrors');
+            err.response.body.validationErrors.should.have.property('body');
+            err.response.body.validationErrors.body.should.be.an('array');
+            err.response.body.validationErrors.body.should.deep.include.members([
+              {
+                keyword: 'minimum',
+                dataPath: '.page_number',
+                schemaPath: '#/properties/page_number/minimum',
+                params: {
+                  comparison: '>=',
+                  limit: 1,
+                  exclusive: false
+                },
+                message: 'should be >= 1'
+              }
+            ]);
+            done();
+          });
+      });
     });
 
     it('Should return and error for invalid page size', done => {
-      UserRequests.signInAsDefaultUser()
-        .then(json => {
-          return request
-            .get('/users')
-            .set(json.header, json.token.raw)
-            .send({
-              page_number: 1,
-              page_size: -10
-            });
-        })
-        .then(res => {
-          done(new Error('Successful response - This should not be called'));
-        })
-        .catch(err => {
-          err.should.have.status(400);
-          err.response.should.be.json;
-          err.response.body.should.have.property('name');
-          err.response.body.should.have.property('validationErrors');
-          err.response.body.validationErrors.should.have.property('body');
-          err.response.body.validationErrors.body.should.be.an('array');
-          err.response.body.validationErrors.body.should.deep.include.members([
-            {
-              keyword: 'minimum',
-              dataPath: '.page_size',
-              schemaPath: '#/properties/page_size/minimum',
-              params: {
-                comparison: '>=',
-                limit: 1,
-                exclusive: false
-              },
-              message: 'should be >= 1'
-            }
-          ]);
-          done();
-        });
+      UserRequests.signInAsDefaultUser().then(session => {
+        request
+          .get('/users')
+          .set(session.header, session.token.raw)
+          .send({
+            page_number: 1,
+            page_size: -10
+          })
+          .then(res => {
+            done(new Error('Successful response - This should not be called'));
+          })
+          .catch(err => {
+            err.should.have.status(400);
+            err.response.should.be.json;
+            err.response.body.should.have.property('name');
+            err.response.body.should.have.property('validationErrors');
+            err.response.body.validationErrors.should.have.property('body');
+            err.response.body.validationErrors.body.should.be.an('array');
+            err.response.body.validationErrors.body.should.deep.include.members([
+              {
+                keyword: 'minimum',
+                dataPath: '.page_size',
+                schemaPath: '#/properties/page_size/minimum',
+                params: {
+                  comparison: '>=',
+                  limit: 1,
+                  exclusive: false
+                },
+                message: 'should be >= 1'
+              }
+            ]);
+            done();
+          });
+      });
     });
 
     it('Should retrieve the first users page list', done => {
-      UserRequests.signInAsDefaultUser()
-        .then(json => {
-          return request.get('/users').set(json.header, json.token.raw);
-        })
-        .then(res => {
-          res.should.have.status(200);
-          res.should.be.json;
-          res.body.should.have.property('page_number');
-          res.body.page_number.should.be.a('number');
-          res.body.should.have.property('users');
-          res.body.users.should.all.be.an('array');
-          res.body.users.should.have.lengthOf(2); // current user and default admin
-          res.body.should.have.property('pages_left');
-          res.body.pages_left.should.be.a('number');
-          res.body.should.have.property('overflow');
-          res.body.overflow.should.be.a('boolean');
-          done();
-        })
-        .catch(err => {
-          done(new Error(`User page not retrieved: ${err.message}`));
-        });
+      UserRequests.signInAsDefaultUser().then(session => {
+        request
+          .get('/users')
+          .set(session.header, session.token.raw)
+          .then(res => {
+            res.should.have.status(200);
+            res.should.be.json;
+            res.body.should.have.property('page_number');
+            res.body.page_number.should.be.a('number');
+            res.body.should.have.property('users');
+            res.body.users.should.all.be.an('array');
+            res.body.users.should.have.lengthOf(2); // current user and default admin
+            res.body.should.have.property('pages_left');
+            res.body.pages_left.should.be.a('number');
+            res.body.should.have.property('overflow');
+            res.body.overflow.should.be.a('boolean');
+            done();
+          })
+          .catch(err => {
+            done(new Error(`User page not retrieved: ${err.message}`));
+          });
+      });
     });
 
     it('Should retrieve a users page list that does not exists', done => {
-      UserRequests.signInAsDefaultUser()
-        .then(json => {
-          return request
-            .get('/users')
-            .set(json.header, json.token.raw)
-            .send({
-              page_number: 2,
-              page_size: 10
-            });
-        })
-        .then(res => {
-          res.should.have.status(200);
-          res.should.be.json;
-          res.body.should.have.property('page_number');
-          res.body.page_number.should.be.a('number');
-          res.body.page_number.should.equal(2);
-          res.body.should.have.property('users');
-          res.body.users.should.all.be.an('array');
-          res.body.users.should.be.empty;
-          res.body.should.have.property('pages_left');
-          res.body.pages_left.should.be.a('number');
-          res.body.pages_left.should.be.equal(0);
-          res.body.should.have.property('overflow');
-          res.body.overflow.should.be.a('boolean');
-          res.body.overflow.should.equal(true);
-          done();
-        })
-        .catch(err => {
-          done(new Error(`User not be authenticated: ${err.message}`));
-        });
-    });
-
-    it('Should retrieve a users page list that has one page ahead', done => {
-      const tenPromisesUserCreation = UserRequests.createSomeUsers(10);
-
-      Promise.all(tenPromisesUserCreation).then(() => {
-        UserRequests.signInAsDefaultUser()
-          .then(json => {
-            return request
-              .get('/users')
-              .set(json.header, json.token.raw)
-              .send({
-                page_number: 1,
-                page_size: 6
-              });
+      UserRequests.signInAsDefaultUser().then(session => {
+        request
+          .get('/users')
+          .set(session.header, session.token.raw)
+          .send({
+            page_number: 2,
+            page_size: 10
           })
           .then(res => {
             res.should.have.status(200);
             res.should.be.json;
             res.body.should.have.property('page_number');
             res.body.page_number.should.be.a('number');
-            res.body.page_number.should.equal(1);
+            res.body.page_number.should.equal(2);
             res.body.should.have.property('users');
             res.body.users.should.all.be.an('array');
-            res.body.users.should.have.lengthOf(6);
+            res.body.users.should.be.empty;
             res.body.should.have.property('pages_left');
             res.body.pages_left.should.be.a('number');
-            res.body.pages_left.should.be.equal(1);
+            res.body.pages_left.should.be.equal(0);
             res.body.should.have.property('overflow');
             res.body.overflow.should.be.a('boolean');
-            res.body.overflow.should.equal(false);
+            res.body.overflow.should.equal(true);
             done();
           })
           .catch(err => {
             done(new Error(`User not be authenticated: ${err.message}`));
           });
+      });
+    });
+
+    it('Should retrieve a users page list that has one page ahead', done => {
+      const tenPromisesUserCreation = UserRequests.createSomeUsers(10);
+
+      Promise.all(tenPromisesUserCreation).then(() => {
+        UserRequests.signInAsDefaultUser().then(session => {
+          request
+            .get('/users')
+            .set(session.header, session.token.raw)
+            .send({
+              page_number: 1,
+              page_size: 6
+            })
+            .then(res => {
+              res.should.have.status(200);
+              res.should.be.json;
+              res.body.should.have.property('page_number');
+              res.body.page_number.should.be.a('number');
+              res.body.page_number.should.equal(1);
+              res.body.should.have.property('users');
+              res.body.users.should.all.be.an('array');
+              res.body.users.should.have.lengthOf(6);
+              res.body.should.have.property('pages_left');
+              res.body.pages_left.should.be.a('number');
+              res.body.pages_left.should.be.equal(1);
+              res.body.should.have.property('overflow');
+              res.body.overflow.should.be.a('boolean');
+              res.body.overflow.should.equal(false);
+              done();
+            })
+            .catch(err => {
+              done(new Error(`User not be authenticated: ${err.message}`));
+            });
+        });
       });
     });
   });
