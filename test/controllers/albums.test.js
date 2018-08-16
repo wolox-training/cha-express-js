@@ -28,10 +28,10 @@ describe('AlbumsController', () => {
     });
 
     it('Should retrieve a list of albums, if logged as user', done => {
-      UserRequests.signInAsDefaultUser().then(json => {
+      UserRequests.signInAsDefaultUser().then(session => {
         request
           .get('/albums')
-          .set(json.header, json.token.raw)
+          .set(session.header, session.token.raw)
           .then(res => {
             res.should.have.status(200);
             res.should.be.json;
@@ -46,10 +46,10 @@ describe('AlbumsController', () => {
     });
 
     it('Should retrieve a list of albums, if logged as admin', done => {
-      UserRequests.signInAsDefaultAdmin().then(json => {
+      UserRequests.signInAsDefaultAdmin().then(session => {
         request
           .get('/albums')
-          .set(json.header, json.token.raw)
+          .set(session.header, session.token.raw)
           .then(res => {
             res.should.have.status(200);
             res.should.be.json;
@@ -80,10 +80,10 @@ describe('AlbumsController', () => {
     });
 
     it('Should buy an album, if logged as user', done => {
-      UserRequests.signInAsDefaultUser().then(json => {
+      UserRequests.signInAsDefaultUser().then(session => {
         request
           .post(`/albums/${albumId}`)
-          .set(json.header, json.token.raw)
+          .set(session.header, session.token.raw)
           .then(res => {
             res.should.have.status(200);
             res.should.be.json;
@@ -96,10 +96,10 @@ describe('AlbumsController', () => {
     });
 
     it('Should buy an album, if logged as admin', done => {
-      UserRequests.signInAsDefaultAdmin().then(json => {
+      UserRequests.signInAsDefaultAdmin().then(session => {
         request
           .post(`/albums/${albumId}`)
-          .set(json.header, json.token.raw)
+          .set(session.header, session.token.raw)
           .then(res => {
             res.should.have.status(200);
             res.should.be.json;
@@ -112,10 +112,10 @@ describe('AlbumsController', () => {
     });
 
     it('Should not buy an album twice, if logged as user', done => {
-      UserRequests.signInAsDefaultUser().then(json => {
+      UserRequests.signInAsDefaultUser().then(session => {
         request
           .post(`/albums/${albumId}`)
-          .set(json.header, json.token.raw)
+          .set(session.header, session.token.raw)
           .then(res => {
             res.should.have.status(200);
             res.should.be.json;
@@ -123,7 +123,7 @@ describe('AlbumsController', () => {
             res.body.id.should.be.a('number');
             request
               .post(`/albums/${albumId}`)
-              .set(json.header, json.token.raw)
+              .set(session.header, session.token.raw)
               .then(resTwo => done(new Error('Successful response - This should not be called')))
               .catch(err => {
                 err.should.have.status(403);
@@ -139,10 +139,10 @@ describe('AlbumsController', () => {
     });
 
     it('Should not buy an album twice, if logged as admin', done => {
-      UserRequests.signInAsDefaultAdmin().then(json => {
+      UserRequests.signInAsDefaultAdmin().then(session => {
         request
           .post(`/albums/${albumId}`)
-          .set(json.header, json.token.raw)
+          .set(session.header, session.token.raw)
           .then(res => {
             res.should.have.status(200);
             res.should.be.json;
@@ -150,7 +150,7 @@ describe('AlbumsController', () => {
             res.body.id.should.be.a('number');
             request
               .post(`/albums/${albumId}`)
-              .set(json.header, json.token.raw)
+              .set(session.header, session.token.raw)
               .then(resTwo => done(new Error('Successful response - This should not be called')))
               .catch(err => {
                 err.should.have.status(403);
@@ -166,10 +166,10 @@ describe('AlbumsController', () => {
     });
 
     it('Should not buy an album, if not found', done => {
-      UserRequests.signInAsDefaultAdmin().then(json => {
+      UserRequests.signInAsDefaultAdmin().then(session => {
         request
           .post(`/albums/-1`)
-          .set(json.header, json.token.raw)
+          .set(session.header, session.token.raw)
           .then(res => done(new Error('Successful response - This should not be called')))
           .catch(err => {
             err.should.have.status(404);
@@ -199,10 +199,10 @@ describe('AlbumsController', () => {
     });
 
     it('Should retrieve bought albums from user, if logged as admin', done => {
-      UserRequests.signInAsDefaultAdmin().then(json => {
+      UserRequests.signInAsDefaultAdmin().then(session => {
         request
-          .get(`/users/${json.userId + 1}/albums`)
-          .set(json.header, json.token)
+          .get(`/users/${session.userId + 1}/albums`)
+          .set(session.header, session.token.raw)
           .then(res => {
             res.should.have.status(200);
             res.should.be.json;
@@ -214,10 +214,10 @@ describe('AlbumsController', () => {
     });
 
     it('Should retrieve its bought albums, if logged as user', done => {
-      UserRequests.signInAsDefaultUser().then(json => {
+      UserRequests.signInAsDefaultUser().then(session => {
         request
-          .get(`/users/${json.userId}/albums`)
-          .set(json.header, json.token)
+          .get(`/users/${session.userId}/albums`)
+          .set(session.header, session.token.raw)
           .then(res => {
             res.should.have.status(200);
             res.should.be.json;
@@ -229,10 +229,10 @@ describe('AlbumsController', () => {
     });
 
     it('Should not retrieve bought albums from another user, if logged as user', done => {
-      UserRequests.signInAsDefaultUser().then(json => {
+      UserRequests.signInAsDefaultUser().then(session => {
         request
-          .get(`/users/${json.userId + 1}/albums`)
-          .set(json.header, json.token)
+          .get(`/users/${session.userId + 1}/albums`)
+          .set(session.header, session.token.raw)
           .then(res => done(new Error('Successful response - This should not be called')))
           .catch(err => {
             err.should.have.status(403);
@@ -265,10 +265,10 @@ describe('AlbumsController', () => {
 
     it(`Should not get photos from not bought album with id: ${albumId}`, done => {
       UserRequests.signInAsDefaultUser()
-        .then(json => {
+        .then(session => {
           request
             .get(`/users/albums/${albumId}/photos`)
-            .set(json.header, json.token)
+            .set(session.header, session.token.raw)
             .then(res => done(new Error('Successful response - This should not be called')))
             .catch(err => {
               err.should.have.status(404);
@@ -283,14 +283,14 @@ describe('AlbumsController', () => {
 
     it(`Should get photos from bought album with id: ${albumId}, if logged as user`, done => {
       UserRequests.signInAsDefaultUser()
-        .then(json => {
+        .then(session => {
           request
             .post(`/albums/${albumId}`) // default user buys album id: 1
-            .set(json.header, json.token)
+            .set(session.header, session.token.raw)
             .then(resAlbumPurchase => {
               request
                 .get(`/users/albums/${albumId}/photos`)
-                .set(json.header, json.token)
+                .set(session.header, session.token.raw)
                 .then(resPhotos => {
                   resPhotos.should.have.status(200);
                   resPhotos.should.be.json;
@@ -313,14 +313,14 @@ describe('AlbumsController', () => {
 
     it(`Should get photos from bought album with id: ${albumId}, if logged as admin`, done => {
       UserRequests.signInAsDefaultAdmin()
-        .then(json => {
+        .then(session => {
           request
             .post(`/albums/${albumId}`) // default user buys album id: 1
-            .set(json.header, json.token)
+            .set(session.header, session.token.raw)
             .then(resAlbumPurchase => {
               request
                 .get(`/users/albums/${albumId}/photos`)
-                .set(json.header, json.token)
+                .set(session.header, session.token.raw)
                 .then(resPhotos => {
                   resPhotos.should.have.status(200);
                   resPhotos.should.be.json;
