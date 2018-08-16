@@ -245,4 +245,100 @@ describe('AlbumsController', () => {
       });
     });
   });
+
+  describe('GET users/albums/:id/photos', () => {
+    it('Should not retrive bought albums from user, if not logged', done => {
+      request
+        .get(`/users/albums/1/photos`)
+        .then(res => done(new Error('Successful response - This should not be called')))
+        .catch(err => {
+          err.should.have.status(401);
+          err.response.should.be.json;
+          err.response.body.should.have.property('message');
+          err.response.body.message.should.be.a('string');
+          err.response.body.message.should.include('no auth header found:');
+          done();
+        });
+    });
+
+    const albumId = 1;
+
+    it(`Should not get photos from not bought album with id: ${albumId}`, done => {
+      UserRequests.signInAsDefaultUser()
+        .then(json => {
+          request
+            .get(`/users/albums/${albumId}/photos`)
+            .set(json.header, json.token)
+            .then(res => done(new Error('Successful response - This should not be called')))
+            .catch(err => {
+              err.should.have.status(404);
+              err.response.should.be.json;
+              err.response.body.should.have.property('message');
+              err.response.body.message.should.include(`Album purchase with albumId ${albumId} not found`);
+              done();
+            });
+        })
+        .catch(err => done(new Error(`Could not sign in with default user: ${err.message}`)));
+    });
+
+    it(`Should get photos from bought album with id: ${albumId}, if logged as user`, done => {
+      UserRequests.signInAsDefaultUser()
+        .then(json => {
+          request
+            .post(`/albums/${albumId}`) // default user buys album id: 1
+            .set(json.header, json.token)
+            .then(resAlbumPurchase => {
+              request
+                .get(`/users/albums/${albumId}/photos`)
+                .set(json.header, json.token)
+                .then(resPhotos => {
+                  resPhotos.should.have.status(200);
+                  resPhotos.should.be.json;
+                  resPhotos.body.should.be.an('array');
+                  resPhotos.body.should.all.have.property('id');
+                  resPhotos.body.should.all.have.property('albumId', albumId);
+                  resPhotos.body.should.all.have.property('title');
+                  resPhotos.body.should.all.have.property('url');
+                  resPhotos.body.should.all.have.property('thumbnailUrl');
+                  done();
+                })
+                .catch(err => {
+                  done(new Error(`Could not retrieve photos for album with id ${albumId}: ${err.message}`));
+                });
+            })
+            .catch(err => done(new Error(`Could buy album with id ${albumId}: ${err.message}`)));
+        })
+        .catch(err => done(new Error(`Could not sign in with default user: ${err.message}`)));
+    });
+
+    it(`Should get photos from bought album with id: ${albumId}, if logged as admin`, done => {
+      UserRequests.signInAsDefaultAdmin()
+        .then(json => {
+          request
+            .post(`/albums/${albumId}`) // default user buys album id: 1
+            .set(json.header, json.token)
+            .then(resAlbumPurchase => {
+              request
+                .get(`/users/albums/${albumId}/photos`)
+                .set(json.header, json.token)
+                .then(resPhotos => {
+                  resPhotos.should.have.status(200);
+                  resPhotos.should.be.json;
+                  resPhotos.body.should.be.an('array');
+                  resPhotos.body.should.all.have.property('id');
+                  resPhotos.body.should.all.have.property('albumId', albumId);
+                  resPhotos.body.should.all.have.property('title');
+                  resPhotos.body.should.all.have.property('url');
+                  resPhotos.body.should.all.have.property('thumbnailUrl');
+                  done();
+                })
+                .catch(err => {
+                  done(new Error(`Could not retrieve photos for album with id ${albumId}: ${err.message}`));
+                });
+            })
+            .catch(err => done(new Error(`Could buy album with id ${albumId}: ${err.message}`)));
+        })
+        .catch(err => done(new Error(`Could not sign in with default user: ${err.message}`)));
+    });
+  });
 });

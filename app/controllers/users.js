@@ -134,19 +134,53 @@ exports.list = (req, res, next) => {
 exports.boughtAlbums = (req, res, next) => {
   const id = parseInt(req.params.id);
   if (User.canSeeBoughtAlbumsFor(req.user, id)) {
-    AlbumPurchase.findAll({
+    return AlbumPurchase.findAll({
       where: {
         userId: id
       }
     })
       .then(purchases => {
         const albumsPromises = purchases.map(p => p.albumId).map(albumId => AlbumService.getById(albumId));
-        Promise.all(albumsPromises)
+        return Promise.all(albumsPromises)
           .then(albums => res.status(200).json(albums))
-          .catch(err => next(errors.externalApiError(err)));
+          .catch(err => {
+            logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
+            next(errors.externalApiError(err));
+          });
       })
-      .catch(err => errors.databaseError(err));
+      .catch(err => {
+        logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
+        next(errors.databaseError(err));
+      });
   } else {
     next(errors.forbiddenError(new Error('You cannot see others albums')));
   }
+};
+
+exports.photosBoughtAlbum = (req, res, next) => {
+  const albumId = parseInt(req.params.id);
+  return AlbumPurchase.findOne({
+    where: {
+      userId: req.user.id,
+      albumId
+    }
+  })
+    .then(purchase => {
+      if (purchase) {
+        return AlbumService.getPhotosForAlbumWithId(purchase.albumId)
+          .then(photos => {
+            res.status(200).json(photos);
+          })
+          .catch(err => {
+            logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
+            next(errors.externalApiError(err));
+          });
+      } else {
+        next(errors.notFound(`Album purchase with albumId ${albumId}`));
+      }
+    })
+    .catch(err => {
+      logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
+      next(errors.databaseError(err));
+    });
 };
