@@ -17,6 +17,12 @@ exports.init = app => {
     UsersController.list
   );
   app.get('/users/:id', [], UsersController.get);
+  app.get('/users/:id/albums', [Auth.secureFor(['regular', 'admin'])], UsersController.boughtAlbums);
+  app.get(
+    '/users/albums/:id/photos',
+    [Auth.secureFor(['regular', 'admin'])],
+    UsersController.photosBoughtAlbum
+  );
   app.post('/users', [validate({ body: UserJsonSchema.forCreate })], UsersController.createUser);
   app.post('/users/sessions', [validate({ body: UserJsonSchema.forSession })], UsersController.session);
   app.post(
