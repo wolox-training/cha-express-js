@@ -11,11 +11,11 @@ describe('AlbumsService', () => {
     it('Should retrieve a list of albums', done => {
       nock(AlbumsService.URL)
         .get('/albums')
-        .reply(200, AlbumsService.ALBUMS_SAMPLE);
+        .reply(200, AlbumsService.SAMPLES.ALBUMS_SAMPLE);
 
       AlbumsService.all()
         .then(albums => {
-          albums.should.eql(AlbumsService.ALBUMS_SAMPLE);
+          albums.should.eql(AlbumsService.SAMPLES.ALBUMS_SAMPLE);
           done();
         })
         .catch(err => done(new Error(`Albums not retrieved: ${err.message}`)));
@@ -53,11 +53,11 @@ describe('AlbumsService', () => {
     it(`Should retrieve an album with id: ${id}`, done => {
       nock(AlbumsService.URL)
         .get(`/albums/${id}`)
-        .reply(200, AlbumsService.ALBUM_SAMPLE(id));
+        .reply(200, AlbumsService.SAMPLES.ALBUM_SAMPLE(id));
 
       AlbumsService.getById(id)
         .then(albums => {
-          albums.should.eql(AlbumsService.ALBUM_SAMPLE(id));
+          albums.should.eql(AlbumsService.SAMPLES.ALBUM_SAMPLE(id));
           done();
         })
         .catch(err => done(new Error(`Album not retrieved: ${err.message}`)));
@@ -83,11 +83,11 @@ describe('AlbumsService', () => {
     it(`Should retrieve photos for album with id: ${id}`, done => {
       nock(AlbumsService.URL)
         .get(`/albums/${id}/photos`)
-        .reply(200, AlbumsService.PHOTOS_FOR_ALBUM_SAMPLE(id));
+        .reply(200, AlbumsService.SAMPLES.PHOTOS_FOR_ALBUM_SAMPLE(id));
 
       AlbumsService.getPhotosForAlbumWithId(id)
         .then(photos => {
-          photos.should.eql(AlbumsService.PHOTOS_FOR_ALBUM_SAMPLE(id));
+          photos.should.eql(AlbumsService.SAMPLES.PHOTOS_FOR_ALBUM_SAMPLE(id));
           done();
         })
         .catch(err => done(new Error(`Album not retrieved: ${err.message}`)));

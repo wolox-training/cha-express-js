@@ -134,7 +134,7 @@ exports.list = (req, res, next) => {
 exports.boughtAlbums = (req, res, next) => {
   const id = parseInt(req.params.id);
   if (User.canSeeBoughtAlbumsFor(req.user, id)) {
-    AlbumPurchase.findAll({
+    return AlbumPurchase.findAll({
       where: {
         userId: id
       }
@@ -159,7 +159,7 @@ exports.boughtAlbums = (req, res, next) => {
 
 exports.photosBoughtAlbum = (req, res, next) => {
   const albumId = parseInt(req.params.id);
-  AlbumPurchase.findOne({
+  return AlbumPurchase.findOne({
     where: {
       userId: req.user.id,
       albumId
