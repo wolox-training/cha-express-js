@@ -5,34 +5,45 @@ const logger = require('../logger');
 const errors = require('../errors');
 
 const JwtService = require('../services/jwt');
+const AlbumService = require('../services/albums');
 
 const User = require('../models').User;
+const AlbumPurchase = require('../models').AlbumPurchase;
 
 exports.session = (req, res, next) => {
   const creds = req.body || {};
 
-  return User.find({ where: { email: creds.email } }).then(user => {
-    if (user) {
-      return bcrypt.compare(creds.password, user.password).then(match => {
-        if (!match) {
-          next(errors.invalidCredentials(new Error('invalid password')));
-        }
-        return JwtService.encode({ id: user.id, role: user.role })
-          .then(token => {
-            logger.log({ level: 'info', message: 'A session token was given' });
-            res.status(200).json({
-              header: JwtService.AUTH_HEADER,
-              token
-            });
+  return User.find({ where: { email: creds.email } })
+    .then(user => {
+      if (user) {
+        return bcrypt
+          .compare(creds.password, user.password)
+          .then(match => {
+            if (!match) {
+              next(errors.invalidCredentials(new Error('invalid password')));
+            }
+            return JwtService.encode({
+              id: user.id,
+              role: user.role
+            })
+              .then(token => {
+                logger.log({ level: 'info', message: 'A session token was given' });
+                res.status(200).json({
+                  header: JwtService.AUTH_HEADER,
+                  token: `Bearer ${token}`,
+                  userId: user.id
+                });
+              })
+              .catch(err => {
+                logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
+                next(errors.invalidCredentials(err));
+              });
           })
-          .catch(err => {
-            logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
-            next(errors.invalidCredentials(err));
-          });
-      });
-    }
-    next(errors.invalidCredentials(new Error('invalid email')));
-  });
+          .catch(err => next(errors.defaultError(err)));
+      }
+      next(errors.invalidCredentials(new Error('invalid email')));
+    })
+    .catch(err => next(errors.databaseError(err)));
 };
 
 const create = persist => {
@@ -54,9 +65,7 @@ const create = persist => {
             next(errors.databaseError(err));
           });
       })
-      .catch(err => {
-        next(errors.defaultError(err));
-      });
+      .catch(err => next(errors.defaultError(err)));
   };
 };
 
@@ -115,6 +124,60 @@ exports.list = (req, res, next) => {
           logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
           next(errors.databaseError(err));
         });
+    })
+    .catch(err => {
+      logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
+      next(errors.databaseError(err));
+    });
+};
+
+exports.boughtAlbums = (req, res, next) => {
+  const id = parseInt(req.params.id);
+  if (User.canSeeBoughtAlbumsFor(req.user, id)) {
+    return AlbumPurchase.findAll({
+      where: {
+        userId: id
+      }
+    })
+      .then(purchases => {
+        const albumsPromises = purchases.map(p => p.albumId).map(albumId => AlbumService.getById(albumId));
+        return Promise.all(albumsPromises)
+          .then(albums => res.status(200).json(albums))
+          .catch(err => {
+            logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
+            next(errors.externalApiError(err));
+          });
+      })
+      .catch(err => {
+        logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
+        next(errors.databaseError(err));
+      });
+  } else {
+    next(errors.forbiddenError(new Error('You cannot see others albums')));
+  }
+};
+
+exports.photosBoughtAlbum = (req, res, next) => {
+  const albumId = parseInt(req.params.id);
+  return AlbumPurchase.findOne({
+    where: {
+      userId: req.user.id,
+      albumId
+    }
+  })
+    .then(purchase => {
+      if (purchase) {
+        return AlbumService.getPhotosForAlbumWithId(purchase.albumId)
+          .then(photos => {
+            res.status(200).json(photos);
+          })
+          .catch(err => {
+            logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
+            next(errors.externalApiError(err));
+          });
+      } else {
+        next(errors.notFound(`Album purchase with albumId ${albumId}`));
+      }
     })
     .catch(err => {
       logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
