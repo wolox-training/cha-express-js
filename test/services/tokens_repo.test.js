@@ -12,31 +12,36 @@ const token =
 describe('TokensRepoService', () => {
   describe('store', () => {
     it('Should store a token', done => {
-      const numberOfTokensBefore = TokensRepoService.numberOfTokens();
-      TokensRepoService.store(token);
-      const numberOfTokensAfter = TokensRepoService.numberOfTokens();
-      numberOfTokensAfter.should.equal(numberOfTokensBefore + 1);
-      done();
+      TokensRepoService.numberOfTokens().then(countBefore => {
+        TokensRepoService.store(token).then(() => {
+          TokensRepoService.numberOfTokens().then(countAfter => {
+            countAfter.should.equal(countBefore + 1);
+            done();
+          });
+        });
+      });
     });
 
     it('Should stored token be active', done => {
-      TokensRepoService.store(token);
-      TokensRepoService.isActive(token).then(active => {
-        active.should.equal(true);
-        done();
+      TokensRepoService.store(token).then(() => {
+        TokensRepoService.isActive(token).then(active => {
+          active.should.equal(true);
+          done();
+        });
       });
     });
   });
 
   describe('disableAll', () => {
     it('Should disable all stored tokens', done => {
-      TokensRepoService.store(token);
-      TokensRepoService.isActive(token).then(activeBefore => {
-        activeBefore.should.equal(true);
-        TokensRepoService.disableAll().then(() => {
-          TokensRepoService.isActive(token).then(activeAfter => {
-            activeAfter.should.equal(false);
-            done();
+      TokensRepoService.store(token).then(() => {
+        TokensRepoService.isActive(token).then(activeBefore => {
+          activeBefore.should.equal(true);
+          TokensRepoService.disableAll().then(() => {
+            TokensRepoService.isActive(token).then(activeAfter => {
+              activeAfter.should.equal(false);
+              done();
+            });
           });
         });
       });

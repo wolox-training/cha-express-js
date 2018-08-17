@@ -385,10 +385,6 @@ describe('UserController', () => {
               .post('/users/sessions/invalidate_all')
               .then(resInvalidate => {
                 resInvalidate.should.have.status(200);
-                resInvalidate.should.be.json;
-                resInvalidate.body.should.have.property('disabled');
-                resInvalidate.body.disabled.should.be.a('number');
-                resInvalidate.body.disabled.should.equal(1);
                 request
                   .get('/users')
                   .set(session.header, session.token.raw)
