@@ -372,6 +372,46 @@ describe('UserController', () => {
     });
   });
 
+  describe('POST /users/sessions/invalidate_all', () => {
+    it(`Should invalidate all active sessions`, done => {
+      UserRequests.signInAsDefaultUser().then(session => {
+        request
+          .get('/users')
+          .set(session.header, session.token.raw)
+          .then(resUsersBefore => {
+            resUsersBefore.should.have.status(200);
+            resUsersBefore.should.be.json;
+            request
+              .post('/users/sessions/invalidate_all')
+              .then(resInvalidate => {
+                resInvalidate.should.have.status(200);
+                resInvalidate.should.be.json;
+                resInvalidate.body.should.have.property('disabled');
+                resInvalidate.body.disabled.should.be.a('number');
+                resInvalidate.body.disabled.should.equal(1);
+                request
+                  .get('/users')
+                  .set(session.header, session.token.raw)
+                  .then(resUsersAfter => {
+                    done(new Error('Successful response - This should not be called'));
+                  })
+                  .catch(err => {
+                    err.response.body.should.have.property('message');
+                    err.response.body.message.should.include('Your token is not active');
+                    done();
+                  });
+              })
+              .catch(err => {
+                done(new Error(`Could not invalidate active sessions: ${err.message}`));
+              });
+          })
+          .catch(err => {
+            done(new Error(`Users list page not retrieved: ${err.message}`));
+          });
+      });
+    });
+  });
+
   describe('GET /users', () => {
     it('Should return an authentication error, because auth header not found', done => {
       request
@@ -383,7 +423,7 @@ describe('UserController', () => {
           err.should.have.status(401);
           err.response.should.be.json;
           err.response.body.should.have.property('message');
-          err.response.body.message.should.include('no auth header found:');
+          err.response.body.message.should.include('no auth header found');
           done();
         });
     });

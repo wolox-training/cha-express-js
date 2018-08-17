@@ -10,6 +10,8 @@ const AlbumService = require('../services/albums');
 const User = require('../models').User;
 const AlbumPurchase = require('../models').AlbumPurchase;
 
+const TokensRepo = require('../services/tokens_repo');
+
 exports.session = (req, res, next) => {
   const creds = req.body || {};
 
@@ -22,6 +24,7 @@ exports.session = (req, res, next) => {
         return JwtService.encode({ id: user.id, role: user.role })
           .then(token => {
             logger.log({ level: 'info', message: 'A session token was given' });
+            TokensRepo.store(token.raw.replace('Bearer ', ''));
             res.status(200).json({
               header: JwtService.AUTH_HEADER,
               token,
@@ -36,6 +39,16 @@ exports.session = (req, res, next) => {
     }
     next(errors.invalidCredentials(new Error('invalid email')));
   });
+};
+
+exports.invalidateSessions = (req, res, next) => {
+  return TokensRepo.disableAll()
+    .then(numberOfDisabledTokens => {
+      res.status(200).json({
+        disabled: numberOfDisabledTokens
+      });
+    })
+    .catch(err => next(errors.defaultError(err)));
 };
 
 const create = persist => {
