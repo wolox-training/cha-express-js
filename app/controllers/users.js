@@ -4,9 +4,12 @@ const bcrypt = require('bcryptjs');
 const logger = require('../logger');
 const errors = require('../errors');
 
+const MailerService = require('../services/mailer/mailer');
 const JwtService = require('../services/jwt');
 
 const User = require('../models').User;
+
+const SignupTemplate = require('../services/mailer/html_templates/signup');
 
 exports.session = (req, res, next) => {
   const creds = req.body || {};
@@ -45,6 +48,7 @@ const create = persist => {
         return persist(userObj)
           .then(createdUser => {
             logger.log({ level: 'info', message: createdUser.firstname });
+            MailerService.send(createdUser.email, SignupTemplate.html(createdUser));
             res.status(201).json({
               id: createdUser.id
             });
