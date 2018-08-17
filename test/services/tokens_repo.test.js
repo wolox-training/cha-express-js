@@ -21,9 +21,25 @@ describe('TokensRepoService', () => {
 
     it('Should stored token be active', done => {
       TokensRepoService.store(token);
-      const active = TokensRepoService.isActive(token);
-      active.should.equal(true);
-      done();
+      TokensRepoService.isActive(token).then(active => {
+        active.should.equal(true);
+        done();
+      });
+    });
+  });
+
+  describe('disableAll', () => {
+    it('Should disable all stored tokens', done => {
+      TokensRepoService.store(token);
+      TokensRepoService.isActive(token).then(activeBefore => {
+        activeBefore.should.equal(true);
+        TokensRepoService.disableAll().then(() => {
+          TokensRepoService.isActive(token).then(activeAfter => {
+            activeAfter.should.equal(false);
+            done();
+          });
+        });
+      });
     });
   });
 });
