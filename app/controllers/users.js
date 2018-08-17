@@ -13,37 +13,29 @@ const AlbumPurchase = require('../models').AlbumPurchase;
 exports.session = (req, res, next) => {
   const creds = req.body || {};
 
-  return User.find({ where: { email: creds.email } })
-    .then(user => {
-      if (user) {
-        return bcrypt
-          .compare(creds.password, user.password)
-          .then(match => {
-            if (!match) {
-              next(errors.invalidCredentials(new Error('invalid password')));
-            }
-            return JwtService.encode({
-              id: user.id,
-              role: user.role
-            })
-              .then(token => {
-                logger.log({ level: 'info', message: 'A session token was given' });
-                res.status(200).json({
-                  header: JwtService.AUTH_HEADER,
-                  token: `Bearer ${token}`,
-                  userId: user.id
-                });
-              })
-              .catch(err => {
-                logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
-                next(errors.invalidCredentials(err));
-              });
+  return User.find({ where: { email: creds.email } }).then(user => {
+    if (user) {
+      return bcrypt.compare(creds.password, user.password).then(match => {
+        if (!match) {
+          next(errors.invalidCredentials(new Error('invalid password')));
+        }
+        return JwtService.encode({ id: user.id, role: user.role })
+          .then(token => {
+            logger.log({ level: 'info', message: 'A session token was given' });
+            res.status(200).json({
+              header: JwtService.AUTH_HEADER,
+              token,
+              userId: user.id
+            });
           })
-          .catch(err => next(errors.defaultError(err)));
-      }
-      next(errors.invalidCredentials(new Error('invalid email')));
-    })
-    .catch(err => next(errors.databaseError(err)));
+          .catch(err => {
+            logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
+            next(errors.invalidCredentials(err));
+          });
+      });
+    }
+    next(errors.invalidCredentials(new Error('invalid email')));
+  });
 };
 
 const create = persist => {
