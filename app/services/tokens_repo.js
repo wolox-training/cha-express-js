@@ -1,6 +1,5 @@
 const tokensRepo = [];
 
-exports.printRepo = () => console.log(tokensRepo);
 exports.numberOfTokens = () => tokensRepo.length;
 
 exports.store = token => {
