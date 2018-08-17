@@ -337,7 +337,7 @@ describe('UserController', () => {
         });
     });
 
-    const expireTime = config.common.session.jwt_expire_time_secs;
+    const expireTime = parseInt(config.common.session.jwt_expire_time_secs);
     it(`Should return a token that expires in ${expireTime}ms`, done => {
       UserRequests.signInAsDefaultUser()
         .then(session => {

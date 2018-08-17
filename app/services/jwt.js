@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const config = require('./../../config');
 
 const SECRET = config.common.session.jwt_secret; // 'secret'
-const JWT_EXPIRE_TIME_SECS = config.common.session.jwt_expire_time_secs; // 60 * 60
+const JWT_EXPIRE_TIME_SECS = parseInt(config.common.session.jwt_expire_time_secs); // 60 * 60
 
 exports.AUTH_HEADER = config.common.session.auth_header; // 'auth_token';
 
