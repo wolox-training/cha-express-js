@@ -39,12 +39,13 @@ describe('AdminController', () => {
     it('Should not create an admin, if logged in as regular user', done => {
       UserRequests.signInAsDefaultUser().then(json => {
         json.should.have.property('token');
-        json.token.should.be.a('string');
+        json.token.should.have.property('raw');
+        json.token.raw.should.be.a('string');
         json.should.have.property('header');
-        json.token.should.be.a('string');
+        json.header.should.be.a('string');
         request
           .post('/admin/users')
-          .set(json.header, json.token)
+          .set(json.header, json.token.raw)
           .send(validAdmin)
           .then(res => {
             done(new Error('Successful response - This should not be called'));
@@ -63,12 +64,13 @@ describe('AdminController', () => {
       UserRequests.signInAsDefaultAdmin()
         .then(json => {
           json.should.have.property('token');
-          json.token.should.be.a('string');
+          json.token.should.have.property('raw');
+          json.token.raw.should.be.a('string');
           json.should.have.property('header');
-          json.token.should.be.a('string');
+          json.header.should.be.a('string');
           request
             .post('/admin/users')
-            .set(json.header, json.token)
+            .set(json.header, json.token.raw)
             .send(validAdmin)
             .then(res => {
               res.should.have.status(201);
@@ -110,12 +112,13 @@ describe('AdminController', () => {
           res.body.id.should.be.a('number');
           UserRequests.signInAsDefaultAdmin().then(json => {
             json.should.have.property('token');
-            json.token.should.be.a('string');
+            json.token.should.have.property('raw');
+            json.token.raw.should.be.a('string');
             json.should.have.property('header');
-            json.token.should.be.a('string');
+            json.header.should.be.a('string');
             request
               .post('/admin/users')
-              .set(json.header, json.token)
+              .set(json.header, json.token.raw)
               .send(validAdmin)
               .then(resTwo => {
                 resTwo.should.have.status(201);
@@ -138,12 +141,13 @@ describe('AdminController', () => {
       UserRequests.signInAsDefaultAdmin()
         .then(json => {
           json.should.have.property('token');
-          json.token.should.be.a('string');
+          json.token.should.have.property('raw');
+          json.token.raw.should.be.a('string');
           json.should.have.property('header');
-          json.token.should.be.a('string');
+          json.header.should.be.a('string');
           request
             .post('/admin/users')
-            .set(json.header, json.token)
+            .set(json.header, json.token.raw)
             .send(validAdmin)
             .then(res => {
               res.should.have.status(201);
@@ -151,7 +155,7 @@ describe('AdminController', () => {
               res.body.id.should.be.a('number');
               request
                 .post('/admin/users')
-                .set(json.header, json.token)
+                .set(json.header, json.token.raw)
                 .send(validAdmin)
                 .then(resTwo => {
                   done(new Error('Successful response - This should not be called'));
@@ -189,12 +193,13 @@ describe('AdminController', () => {
     it('Should not create a user without email', done => {
       UserRequests.signInAsDefaultAdmin().then(json => {
         json.should.have.property('token');
-        json.token.should.be.a('string');
+        json.token.should.have.property('raw');
+        json.token.raw.should.be.a('string');
         json.should.have.property('header');
-        json.token.should.be.a('string');
+        json.header.should.be.a('string');
         return request
           .post('/admin/users')
-          .set(json.header, json.token)
+          .set(json.header, json.token.raw)
           .send(adminWithoutEmail)
           .then(res => {
             done(new Error('Successful response - This should not be called'));
@@ -232,12 +237,13 @@ describe('AdminController', () => {
     it('Should not create an user with a short password', done => {
       UserRequests.signInAsDefaultAdmin().then(json => {
         json.should.have.property('token');
-        json.token.should.be.a('string');
+        json.token.should.have.property('raw');
+        json.token.raw.should.be.a('string');
         json.should.have.property('header');
-        json.token.should.be.a('string');
+        json.header.should.be.a('string');
         request
           .post('/admin/users')
-          .set(json.header, json.token)
+          .set(json.header, json.token.raw)
           .send(adminWithShortPassword)
           .then(res => {
             done(new Error('Successful response - This should not be called'));
@@ -272,15 +278,16 @@ describe('AdminController', () => {
       email: ''
     };
 
-    it('Should not create an empty user', done => {
+    it('Should not create an empty admin', done => {
       UserRequests.signInAsDefaultAdmin().then(json => {
         json.should.have.property('token');
-        json.token.should.be.a('string');
+        json.token.should.have.property('raw');
+        json.token.raw.should.be.a('string');
         json.should.have.property('header');
-        json.token.should.be.a('string');
+        json.header.should.be.a('string');
         request
           .post('/admin/users')
-          .set(json.header, json.token)
+          .set(json.header, json.token.raw)
           .send(emptyAdmin)
           .then(res => {
             done(new Error('Successful response - This should not be called'));
