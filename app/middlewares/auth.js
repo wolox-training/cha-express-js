@@ -1,21 +1,27 @@
 const JwtService = require('./../services/jwt'),
   User = require('../models').User,
+  TokensRepo = require('../services/tokens_repo'),
   errors = require('../errors');
 
 exports.secureFor = roles => {
   return (req, res, next) => {
     const authHeader = req.headers[JwtService.AUTH_HEADER];
-
     if (authHeader) {
-      return JwtService.decode(authHeader.replace('Bearer ', ''))
+      const token = authHeader.replace('Bearer ', '');
+      return JwtService.decode(token)
         .then(json => {
-          if (!roles.includes(json.role)) {
-            next(errors.notAllowed(new Error('Your role is not allowed')));
-          }
-          return User.findById(json.id, {
-            attributes: {
-              exclude: ['password']
+          return TokensRepo.isActive(token).then(active => {
+            if (!active) {
+              next(errors.notAllowed(new Error('Your token is not active')));
             }
+            if (!roles.includes(json.role)) {
+              next(errors.notAllowed(new Error('Your role is not allowed')));
+            }
+            return User.findById(json.id, {
+              attributes: {
+                exclude: ['password']
+              }
+            });
           });
         })
         .then(user => {
