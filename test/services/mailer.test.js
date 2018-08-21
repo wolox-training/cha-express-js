@@ -8,10 +8,14 @@ chai.use(chaiThings);
 describe('MailerService', () => {
   describe('send', () => {
     it('Should send an email', done => {
-      MailerService.send('test@wolox.com.ar', {
-        subject: 'Test email',
-        body: '<h1>Test Email</h1>'
-      })
+      MailerService.send(
+        'test@wolox.com.ar',
+        {
+          subject: 'Test email',
+          body: '<h1>Test Email</h1>'
+        },
+        true
+      )
         .then(() => done())
         .catch(err => done(new Error(`Email could not be sent: ${err.message}`)));
     });

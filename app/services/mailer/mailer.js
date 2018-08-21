@@ -1,8 +1,12 @@
 const config = require('../../../config');
 const nodemailer = require('nodemailer');
+const stubTransport = require('nodemailer-stub-transport');
 
-exports.send = (to, content) => {
-  const transporter = nodemailer.createTransport(config.common.mailer);
+exports.send = (to, content, stub = false) => {
+  const transporter = stub
+    ? nodemailer.createTransport(stubTransport())
+    : nodemailer.createTransport(config.common.mailer);
+
   return transporter.sendMail({
     from: `"Wolox Training 👤" <${config.common.mailer.auth.user}>`,
     to,
