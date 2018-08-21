@@ -4,12 +4,14 @@ const bcrypt = require('bcryptjs');
 const logger = require('../logger');
 const errors = require('../errors');
 
+const MailerService = require('../services/mailer/mailer');
 const JwtService = require('../services/jwt');
 const AlbumService = require('../services/albums');
 
 const User = require('../models').User;
 const AlbumPurchase = require('../models').AlbumPurchase;
 
+const SignupTemplate = require('../services/mailer/html_templates/signup');
 const TokensRepo = require('../services/tokens_repo');
 
 exports.session = (req, res, next) => {
@@ -67,6 +69,7 @@ const create = persist => {
         return persist(userObj)
           .then(createdUser => {
             logger.log({ level: 'info', message: createdUser.firstname });
+            MailerService.send(createdUser.email, SignupTemplate.html(createdUser));
             res.status(201).json({
               id: createdUser.id
             });
