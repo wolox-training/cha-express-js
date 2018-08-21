@@ -12,6 +12,7 @@ const User = require('../models').User;
 const AlbumPurchase = require('../models').AlbumPurchase;
 
 const SignupTemplate = require('../services/mailer/html_templates/signup');
+const TokensRepo = require('../services/tokens_repo');
 
 exports.session = (req, res, next) => {
   const creds = req.body || {};
@@ -21,24 +22,41 @@ exports.session = (req, res, next) => {
       return bcrypt.compare(creds.password, user.password).then(match => {
         if (!match) {
           next(errors.invalidCredentials(new Error('invalid password')));
-        }
-        return JwtService.encode({ id: user.id, role: user.role })
-          .then(token => {
-            logger.log({ level: 'info', message: 'A session token was given' });
-            res.status(200).json({
-              header: JwtService.AUTH_HEADER,
-              token,
-              userId: user.id
+        } else {
+          return JwtService.encode({ id: user.id, role: user.role })
+            .then(token => {
+              logger.log({ level: 'info', message: 'A session token was given' });
+              TokensRepo.store(token.raw.replace('Bearer ', ''))
+                .then(() => {
+                  res.status(200).json({
+                    header: JwtService.AUTH_HEADER,
+                    token,
+                    userId: user.id
+                  });
+                })
+                .catch(err => {
+                  console.log(`DEBUG => ${err}`);
+                  logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
+                  next(errors.databaseError(err));
+                });
+            })
+            .catch(err => {
+              logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
+              next(errors.invalidCredentials(err));
             });
-          })
-          .catch(err => {
-            logger.log({ level: 'error', message: JSON.stringify(err, null, 2) });
-            next(errors.invalidCredentials(err));
-          });
+        }
       });
     }
     next(errors.invalidCredentials(new Error('invalid email')));
   });
+};
+
+exports.invalidateSessions = (req, res, next) => {
+  return TokensRepo.disableAll()
+    .then(() => {
+      res.status(200).json();
+    })
+    .catch(err => next(errors.defaultError(err)));
 };
 
 const create = persist => {

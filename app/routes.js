@@ -13,7 +13,7 @@ exports.init = app => {
   // Users
   app.get(
     '/users',
-    [Auth.secureFor(['regular']), validate({ body: UserJsonSchema.forList })],
+    [Auth.secureFor(['regular', 'admin']), validate({ body: UserJsonSchema.forList })],
     UsersController.list
   );
   app.get('/users/:id', [], UsersController.get);
@@ -25,6 +25,7 @@ exports.init = app => {
   );
   app.post('/users', [validate({ body: UserJsonSchema.forCreate })], UsersController.createUser);
   app.post('/users/sessions', [validate({ body: UserJsonSchema.forSession })], UsersController.session);
+  app.post('/users/sessions/invalidate_all', [], UsersController.invalidateSessions);
   app.post(
     '/admin/users',
     [Auth.secureFor(['admin']), validate({ body: AdminJsonSchema.forCreate })],

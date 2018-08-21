@@ -5,6 +5,7 @@ const fs = require('fs'),
   chai = require('chai'),
   chaiHttp = require('chai-http'),
   models = require('../app/models'),
+  TokensRepo = require('../app/services/tokens_repo'),
   dataCreation = require('../scripts/dataCreation');
 
 chai.use(chaiHttp);
@@ -23,6 +24,9 @@ beforeEach('drop tables, re-create them and populate sample data', done => {
       .query(`TRUNCATE TABLE ${tableExpression} RESTART IDENTITY`)
       .then(() => {
         return dataCreation.execute();
+      })
+      .then(() => {
+        return TokensRepo.disableAll();
       })
       .then(() => done());
   });
